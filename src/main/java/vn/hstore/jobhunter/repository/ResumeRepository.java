@@ -10,4 +10,6 @@ import vn.hstore.jobhunter.domain.Resume;
 public interface ResumeRepository extends JpaRepository<Resume, Long>,
         JpaSpecificationExecutor<Resume> {
 
+    boolean existsByJobId(Long jobId);
+
 }

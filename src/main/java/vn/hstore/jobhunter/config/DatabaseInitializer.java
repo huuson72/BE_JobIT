@@ -2,9 +2,11 @@ package vn.hstore.jobhunter.config;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import vn.hstore.jobhunter.domain.Permission;
 import vn.hstore.jobhunter.domain.Role;
 import vn.hstore.jobhunter.domain.User;
@@ -104,10 +106,10 @@ public class DatabaseInitializer implements CommandLineRunner {
         if (countUsers == 0) {
             User adminUser = new User();
             adminUser.setEmail("admin@gmail.com");
-            adminUser.setAddress("hn");
+            adminUser.setAddress("hue");
             adminUser.setAge(25);
             adminUser.setGender(GenderEnum.MALE);
-            adminUser.setName("I'm super admin");
+            adminUser.setName("Admin");
             adminUser.setPassword(this.passwordEncoder.encode("123456"));
 
             Role adminRole = this.roleRepository.findByName("SUPER_ADMIN");

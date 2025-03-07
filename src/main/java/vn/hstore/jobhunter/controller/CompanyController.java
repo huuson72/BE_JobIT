@@ -1,5 +1,6 @@
 package vn.hstore.jobhunter.controller;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
@@ -65,4 +66,16 @@ public class CompanyController {
         Optional<Company> cOptional = this.companyService.findById(id);
         return ResponseEntity.ok().body(cOptional.get());
     }
+
+    @GetMapping("/companies/{id}/jobs")
+    @ApiMessage("Fetch jobs by company ID")
+    public ResponseEntity<?> getJobsByCompanyId(@PathVariable("id") long id) {
+        Map<String, Object> response = this.companyService.findCompanyWithJobsById(id);
+        if (response == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Company not found", "statusCode", 404));
+        }
+        return ResponseEntity.ok(response);
+    }
+
 }

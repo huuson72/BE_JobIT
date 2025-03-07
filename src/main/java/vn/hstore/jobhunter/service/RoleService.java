@@ -3,10 +3,12 @@ package vn.hstore.jobhunter.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
 import vn.hstore.jobhunter.domain.Permission;
 import vn.hstore.jobhunter.domain.Role;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
@@ -34,9 +36,9 @@ public class RoleService {
         // check permissions
         if (r.getPermissions() != null) {
             List<Long> reqPermissions = r.getPermissions()
-                    .stream().map(x -> x.getId())
+                    .stream().map(x -> x.getId()) // Lấy ID của các Permission được chọn
                     .collect(Collectors.toList());
-
+            // Tìm các quyền trong cơ sở dữ liệu theo ID
             List<Permission> dbPermissions = this.permissionRepository.findByIdIn(reqPermissions);
             r.setPermissions(dbPermissions);
         }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import vn.hstore.jobhunter.domain.Company;
 import vn.hstore.jobhunter.domain.User;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -18,4 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     User findByRefreshTokenAndEmail(String token, String email);
 
     List<User> findByCompany(Company company);
+
+    Optional<User> findById(Long id);
 }

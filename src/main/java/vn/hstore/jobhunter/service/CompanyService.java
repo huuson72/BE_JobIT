@@ -1,6 +1,8 @@
 package vn.hstore.jobhunter.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -12,6 +14,7 @@ import vn.hstore.jobhunter.domain.Company;
 import vn.hstore.jobhunter.domain.User;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hstore.jobhunter.repository.CompanyRepository;
+import vn.hstore.jobhunter.repository.JobRepository;
 import vn.hstore.jobhunter.repository.UserRepository;
 
 @Service
@@ -19,12 +22,15 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
+    private final JobRepository jobRepository;
 
     public CompanyService(
             CompanyRepository companyRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            JobRepository jobRepository) { // Thêm JobRepository vào constructor
         this.companyRepository = companyRepository;
         this.userRepository = userRepository;
+        this.jobRepository = jobRepository;
     }
 
     public Company handleCreateCompany(Company c) {
@@ -75,4 +81,19 @@ public class CompanyService {
     public Optional<Company> findById(long id) {
         return this.companyRepository.findById(id);
     }
+
+    public Map<String, Object> findCompanyWithJobsById(long id) {
+        Optional<Company> companyOptional = this.companyRepository.findById(id);
+        if (companyOptional.isPresent()) {
+            Company company = companyOptional.get();
+            List<vn.hstore.jobhunter.domain.Job> jobs = this.jobRepository.findByCompany(company); // Lấy danh sách công việc của công ty
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("company", company);
+            response.put("jobs", jobs);
+            return response;
+        }
+        return null;
+    }
+
 }

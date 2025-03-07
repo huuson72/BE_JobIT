@@ -1,6 +1,8 @@
 package vn.hstore.jobhunter.controller;
 
+import java.util.Map;
 import java.util.Optional;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -13,7 +15,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.turkraft.springfilter.boot.Filter;
+
 import jakarta.validation.Valid;
 import vn.hstore.jobhunter.domain.Job;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
@@ -52,15 +56,28 @@ public class JobController {
                 .body(this.jobService.update(job, currentJob.get()));
     }
 
+    // @DeleteMapping("/jobs/{id}")
+    // @ApiMessage("Delete a job by id")
+    // public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {
+    //     Optional<Job> currentJob = this.jobService.fetchJobById(id);
+    //     if (!currentJob.isPresent()) {
+    //         throw new IdInvalidException("Job not found");
+    //     }
+    //     this.jobService.delete(id);
+    //     return ResponseEntity.ok().body(null);
+    // }
     @DeleteMapping("/jobs/{id}")
     @ApiMessage("Delete a job by id")
-    public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {
+    public ResponseEntity<?> delete(@PathVariable("id") long id) throws IdInvalidException {
         Optional<Job> currentJob = this.jobService.fetchJobById(id);
         if (!currentJob.isPresent()) {
             throw new IdInvalidException("Job not found");
         }
+
         this.jobService.delete(id);
-        return ResponseEntity.ok().body(null);
+
+        // Trả về thông báo thành công rõ ràng
+        return ResponseEntity.ok().body(Map.of("message", "Xóa công việc thành công"));
     }
 
     @GetMapping("/jobs/{id}")

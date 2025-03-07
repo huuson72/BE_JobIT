@@ -33,17 +33,39 @@ public class UserService {
         this.roleService = roleService;
     }
 
+    public User getUserById(long id) {
+        Optional<User> userOptional = userRepository.findById(id);
+        return userOptional.orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+    }
+
+    // public User handleCreateUser(User user) {
+    //     // check company
+    //     if (user.getCompany() != null) {
+    //         Optional<Company> companyOptional = this.companyService.findById(user.getCompany().getId());
+    //         user.setCompany(companyOptional.isPresent() ? companyOptional.get() : null);
+    //     }
+    //     // check role
+    //     if (user.getRole() != null) {
+    //         Role r = this.roleService.fetchById(user.getRole().getId());
+    //         user.setRole(r != null ? r : null);
+    //     }
+    //     return this.userRepository.save(user);
+    // }
     public User handleCreateUser(User user) {
         // check company
         if (user.getCompany() != null) {
             Optional<Company> companyOptional = this.companyService.findById(user.getCompany().getId());
-            user.setCompany(companyOptional.isPresent() ? companyOptional.get() : null);
+            user.setCompany(companyOptional.orElse(null));
         }
 
         // check role
         if (user.getRole() != null) {
             Role r = this.roleService.fetchById(user.getRole().getId());
-            user.setRole(r != null ? r : null);
+            user.setRole(r);
+        } else {
+            // Gán role có ID = 3 nếu user không có role
+            Role defaultRole = this.roleService.fetchById(3);
+            user.setRole(defaultRole);
         }
 
         return this.userRepository.save(user);
@@ -84,6 +106,28 @@ public class UserService {
         return rs;
     }
 
+    // public User handleUpdateUser(User reqUser) {
+    //     User currentUser = this.fetchUserById(reqUser.getId());
+    //     if (currentUser != null) {
+    //         currentUser.setAddress(reqUser.getAddress());
+    //         currentUser.setGender(reqUser.getGender());
+    //         currentUser.setAge(reqUser.getAge());
+    //         currentUser.setName(reqUser.getName());
+    //         // check company
+    //         if (reqUser.getCompany() != null) {
+    //             Optional<Company> companyOptional = this.companyService.findById(reqUser.getCompany().getId());
+    //             currentUser.setCompany(companyOptional.isPresent() ? companyOptional.get() : null);
+    //         }
+    //         // check role
+    //         if (reqUser.getRole() != null) {
+    //             Role r = this.roleService.fetchById(reqUser.getRole().getId());
+    //             currentUser.setRole(r != null ? r : null);
+    //         }
+    //         // update
+    //         currentUser = this.userRepository.save(currentUser);
+    //     }
+    //     return currentUser;
+    // }
     public User handleUpdateUser(User reqUser) {
         User currentUser = this.fetchUserById(reqUser.getId());
         if (currentUser != null) {
@@ -92,19 +136,21 @@ public class UserService {
             currentUser.setAge(reqUser.getAge());
             currentUser.setName(reqUser.getName());
 
-            // check company
-            if (reqUser.getCompany() != null) {
+            // Check công ty (tránh lỗi NullPointerException)
+            if (reqUser.getCompany() != null && reqUser.getCompany().getId() != null) {
                 Optional<Company> companyOptional = this.companyService.findById(reqUser.getCompany().getId());
-                currentUser.setCompany(companyOptional.isPresent() ? companyOptional.get() : null);
+                currentUser.setCompany(companyOptional.orElse(null));
+            } else {
+                currentUser.setCompany(null); // Nếu không chọn công ty, set null luôn
             }
 
-            // check role
+            // Check role
             if (reqUser.getRole() != null) {
                 Role r = this.roleService.fetchById(reqUser.getRole().getId());
-                currentUser.setRole(r != null ? r : null);
+                currentUser.setRole(r);
             }
 
-            // update
+            // Update user
             currentUser = this.userRepository.save(currentUser);
         }
         return currentUser;
