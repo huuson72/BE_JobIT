@@ -12,13 +12,16 @@ import org.springframework.stereotype.Service;
 import vn.hstore.jobhunter.domain.Company;
 import vn.hstore.jobhunter.domain.Job;
 import vn.hstore.jobhunter.domain.Skill;
+import vn.hstore.jobhunter.domain.Subscriber;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
+import vn.hstore.jobhunter.domain.response.email.ResEmailJob;
 import vn.hstore.jobhunter.domain.response.job.ResCreateJobDTO;
 import vn.hstore.jobhunter.domain.response.job.ResUpdateJobDTO;
 import vn.hstore.jobhunter.repository.CompanyRepository;
 import vn.hstore.jobhunter.repository.JobRepository;
 import vn.hstore.jobhunter.repository.ResumeRepository;
 import vn.hstore.jobhunter.repository.SkillRepository;
+import vn.hstore.jobhunter.repository.SubscriberRepository;
 
 @Service
 public class JobService {
@@ -27,15 +30,21 @@ public class JobService {
     private final SkillRepository skillRepository;
     private final CompanyRepository companyRepository;
     private final ResumeRepository resumeRepository;
+    private final EmailService emailService;
+    private final SubscriberRepository subscriberRepository;
 
     public JobService(JobRepository jobRepository,
             SkillRepository skillRepository,
             CompanyRepository companyRepository,
-            ResumeRepository resumeRepository) {
+            ResumeRepository resumeRepository,
+            EmailService emailService,
+            SubscriberRepository subscriberRepository) {
         this.resumeRepository = resumeRepository;
         this.jobRepository = jobRepository;
         this.skillRepository = skillRepository;
         this.companyRepository = companyRepository;
+        this.emailService = emailService;
+        this.subscriberRepository = subscriberRepository;
     }
 
     public Optional<Job> fetchJobById(long id) {
@@ -63,6 +72,7 @@ public class JobService {
 
         // create job
         Job currentJob = this.jobRepository.save(j);
+        sendEmailToSubscribers(currentJob);
 
         // convert response
         ResCreateJobDTO dto = new ResCreateJobDTO();
@@ -86,6 +96,36 @@ public class JobService {
         }
 
         return dto;
+    }
+
+    private void sendEmailToSubscribers(Job job) {
+        List<Skill> jobSkills = job.getSkills();
+
+        if (jobSkills == null || jobSkills.isEmpty()) {
+            System.out.println("⚠ Không có kỹ năng nào trong công việc mới, không gửi email.");
+            return;
+        }
+
+        List<Subscriber> subscribers = subscriberRepository.findSubscribersBySkills(jobSkills);
+
+        System.out.println("📢 Số lượng subscriber phù hợp: " + subscribers.size());
+
+        if (!subscribers.isEmpty()) {
+            for (Subscriber sub : subscribers) {
+                System.out.println("📩 Đang gửi email đến: " + sub.getEmail());
+
+                List<ResEmailJob> jobList = List.of(convertJobToSendEmail(job));
+
+                emailService.sendEmailFromTemplateSync(
+                        sub.getEmail(),
+                        "Cơ hội việc làm mới phù hợp với bạn!",
+                        "job",
+                        sub.getName(),
+                        jobList);
+            }
+        } else {
+            System.out.println("⚠ Không có subscriber nào phù hợp với công việc này.");
+        }
     }
 
     public ResUpdateJobDTO update(Job j, Job jobInDB) {
@@ -147,6 +187,21 @@ public class JobService {
 
     public void delete(long id) {
         this.jobRepository.deleteById(id);
+    }
+
+    private ResEmailJob convertJobToSendEmail(Job job) {
+        ResEmailJob res = new ResEmailJob();
+        res.setName(job.getName());
+        res.setSalary(job.getSalary());
+        res.setCompany(new ResEmailJob.CompanyEmail(job.getCompany().getName()));
+
+        List<Skill> skills = job.getSkills();
+        List<ResEmailJob.SkillEmail> skillEmails = skills.stream()
+                .map(skill -> new ResEmailJob.SkillEmail(skill.getName()))
+                .collect(Collectors.toList());
+
+        res.setSkills(skillEmails);
+        return res;
     }
 
     public ResultPaginationDTO fetchAll(Specification<Job> spec, Pageable pageable) {

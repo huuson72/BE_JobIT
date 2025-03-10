@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import vn.hstore.jobhunter.domain.Job;
 import vn.hstore.jobhunter.domain.Skill;
 import vn.hstore.jobhunter.domain.Subscriber;
@@ -42,18 +43,92 @@ public class SubscriberService {
         return this.subscriberRepository.existsByEmail(email);
     }
 
+    @Scheduled(cron = "0 25 11 * * ?")
+    @Transactional
+    public void sendScheduledEmails() {
+        this.sendSubscribersEmailJobs();
+    }
+
+    // public Subscriber create(Subscriber subs) {
+    //     // check skills
+    //     if (subs.getSkills() != null) {
+    //         List<Long> reqSkills = subs.getSkills()
+    //                 .stream().map(x -> x.getId())
+    //                 .collect(Collectors.toList());
+    //         List<Skill> dbSkills = this.skillRepository.findByIdIn(reqSkills);
+    //         subs.setSkills(dbSkills);
+    //     }
+    //     Subscriber savedSubscriber = this.subscriberRepository.save(subs);
+    //     sendSubscribersEmailJobsForUser(savedSubscriber);
+    //     return this.subscriberRepository.save(subs);
+    // }
+    // public void sendSubscribersEmailJobsForUser(Subscriber sub) {
+    //     List<Skill> listSkills = sub.getSkills();
+    //     if (listSkills != null && !listSkills.isEmpty()) {
+    //         List<Job> listJobs = this.jobRepository.findBySkillsIn(listSkills);
+    //         if (listJobs != null && !listJobs.isEmpty()) {
+    //             List<ResEmailJob> arr = listJobs.stream()
+    //                     .map(this::convertJobToSendEmail)
+    //                     .collect(Collectors.toList());
+    //             this.emailService.sendEmailFromTemplateSync(
+    //                     sub.getEmail(),
+    //                     "Cơ hội việc làm mới phù hợp với bạn!",
+    //                     "job",
+    //                     sub.getName(),
+    //                     arr);
+    //         }
+    //     }
+    // }
     public Subscriber create(Subscriber subs) {
-        // check skills
+        // 1️⃣ Kiểm tra kỹ năng của subscriber
         if (subs.getSkills() != null) {
-            List<Long> reqSkills = subs.getSkills()
-                    .stream().map(x -> x.getId())
+            List<Long> reqSkills = subs.getSkills().stream()
+                    .map(Skill::getId)
                     .collect(Collectors.toList());
 
             List<Skill> dbSkills = this.skillRepository.findByIdIn(reqSkills);
             subs.setSkills(dbSkills);
         }
 
-        return this.subscriberRepository.save(subs);
+        // 2️⃣ Lưu subscriber vào database
+        Subscriber savedSubscriber = this.subscriberRepository.save(subs);
+
+        // 3️⃣ Gửi email ngay lập tức nếu có job phù hợp
+        sendSubscribersEmailJobsForUser(savedSubscriber);
+
+        // 4️⃣ Trả về subscriber đã lưu
+        return savedSubscriber;
+    }
+
+    // ✅ Gửi email ngay khi có job phù hợp
+    public void sendSubscribersEmailJobsForUser(Subscriber sub) {
+        System.out.println("📧 Gửi email cho: " + sub.getEmail());
+
+        try {
+            List<Skill> listSkills = sub.getSkills();
+            if (listSkills != null && !listSkills.isEmpty()) {
+                List<Job> listJobs = this.jobRepository.findBySkillsIn(listSkills);
+                if (listJobs != null && !listJobs.isEmpty()) {
+                    List<ResEmailJob> arr = listJobs.stream()
+                            .map(this::convertJobToSendEmail)
+                            .collect(Collectors.toList());
+
+                    this.emailService.sendEmailFromTemplateSync(
+                            sub.getEmail(),
+                            "Danh sách công việc phù hợp với bạn!",
+                            "job",
+                            sub.getName(),
+                            arr);
+                } else {
+                    System.out.println("⚠ Không có công việc nào phù hợp với ứng viên: " + sub.getEmail());
+                }
+            } else {
+                System.out.println("⚠ Ứng viên không có kỹ năng nào: " + sub.getEmail());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("❌ Lỗi khi gửi email cho " + sub.getEmail());
+        }
     }
 
     public Subscriber update(Subscriber subsDB, Subscriber subsRequest) {
@@ -116,4 +191,11 @@ public class SubscriberService {
     public Subscriber findByEmail(String email) {
         return this.subscriberRepository.findByEmail(email);
     }
+
+    public Subscriber registerAndSendEmail(Subscriber subs) {
+        Subscriber savedSubscriber = create(subs);  // Lưu vào DB trước
+        sendSubscribersEmailJobsForUser(savedSubscriber); // Gửi mail ngay sau khi đăng ký
+        return savedSubscriber;
+    }
+
 }
