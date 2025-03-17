@@ -58,10 +58,12 @@ public class SecurityConfiguration {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(
                         authz -> authz
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/{id}/info").authenticated()
                                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "HR", "MANAGER")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/companies/**").permitAll()
                                 // .requestMatchers("/api/v1/admin/dashboard-stats").permitAll()
                                 // .requestMatchers(HttpMethod.GET, "/api/v1/email/**").permitAll()
+                                .requestMatchers("/api/favorites/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated() // Yêu cầu xác thực
                                 .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll() // Cho phép truy cập công khai
                                 .requestMatchers(whiteList).permitAll()

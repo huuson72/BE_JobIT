@@ -50,6 +50,8 @@ public class User {
 
     private String address;
 
+    private String phone;
+
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;
 
@@ -68,6 +70,10 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
     List<Review> reviews;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<FavouriteJob> favoriteJobs;
 
     @ManyToOne
     @JoinColumn(name = "role_id")

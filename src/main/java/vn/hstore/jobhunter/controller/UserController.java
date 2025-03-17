@@ -18,6 +18,7 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import vn.hstore.jobhunter.domain.User;
+import vn.hstore.jobhunter.domain.request.UpdateUserInfoRequest;
 import vn.hstore.jobhunter.domain.response.ResCreateUserDTO;
 import vn.hstore.jobhunter.domain.response.ResUpdateUserDTO;
 import vn.hstore.jobhunter.domain.response.ResUserDTO;
@@ -99,6 +100,42 @@ public class UserController {
             throw new IdInvalidException("User với id = " + user.getId() + " không tồn tại");
         }
         return ResponseEntity.ok(this.userService.convertToResUpdateUserDTO(ericUser));
+    }
+
+    @PutMapping("/users/{id}/info")
+    @ApiMessage("Cập nhật thông tin người dùng")
+    public ResponseEntity<ResUserDTO> updateUserInfo(
+            @PathVariable("id") long id,
+            @Valid @RequestBody UpdateUserInfoRequest request) throws IdInvalidException {
+        
+        User currentUser = this.userService.fetchUserById(id);
+        if (currentUser == null) {
+            throw new IdInvalidException("User với id = " + id + " không tồn tại");
+        }
+
+        // Check if new email already exists for another user
+        if (request.getEmail() != null && !request.getEmail().equals(currentUser.getEmail())) {
+            boolean isEmailExist = this.userService.isEmailExist(request.getEmail());
+            if (isEmailExist) {
+                throw new IdInvalidException(
+                        "Email " + request.getEmail() + " đã tồn tại, vui lòng sử dụng email khác.");
+            }
+        }
+
+        // Update user information
+        currentUser.setName(request.getFullName());
+        if (request.getEmail() != null) {
+            currentUser.setEmail(request.getEmail());
+        }
+        if (request.getPhone() != null) {
+            currentUser.setPhone(request.getPhone());
+        }
+        if (request.getAddress() != null) {
+            currentUser.setAddress(request.getAddress());
+        }
+
+        User updatedUser = this.userService.handleUpdateUser(currentUser);
+        return ResponseEntity.ok(this.userService.convertToResUserDTO(updatedUser));
     }
 
 }

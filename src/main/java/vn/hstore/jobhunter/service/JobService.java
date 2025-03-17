@@ -22,6 +22,8 @@ import vn.hstore.jobhunter.repository.JobRepository;
 import vn.hstore.jobhunter.repository.ResumeRepository;
 import vn.hstore.jobhunter.repository.SkillRepository;
 import vn.hstore.jobhunter.repository.SubscriberRepository;
+import vn.hstore.jobhunter.util.JobSpecification;
+import vn.hstore.jobhunter.util.constant.LevelEnum;
 
 @Service
 public class JobService {
@@ -204,22 +206,37 @@ public class JobService {
         return res;
     }
 
-    public ResultPaginationDTO fetchAll(Specification<Job> spec, Pageable pageable) {
-        Page<Job> pageUser = this.jobRepository.findAll(spec, pageable);
+    // public ResultPaginationDTO fetchAll(Specification<Job> spec, Pageable pageable) {
+    //     Page<Job> pageUser = this.jobRepository.findAll(spec, pageable);
+    //     ResultPaginationDTO rs = new ResultPaginationDTO();
+    //     ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
+    //     mt.setPage(pageable.getPageNumber() + 1);
+    //     mt.setPageSize(pageable.getPageSize());
+    //     mt.setPages(pageUser.getTotalPages());
+    //     mt.setTotal(pageUser.getTotalElements());
+    //     rs.setMeta(mt);
+    //     rs.setResult(pageUser.getContent());
+    //     return rs;
+    // }
+    public ResultPaginationDTO fetchAll(Specification<Job> spec, Pageable pageable, LevelEnum level, Double minSalary, Double maxSalary) {
+        Specification<Job> finalSpec = spec
+                .and(JobSpecification.hasLevel(level))
+                .and(JobSpecification.hasSalaryBetween(minSalary, maxSalary));
+
+        Page<Job> pageJob = this.jobRepository.findAll(finalSpec, pageable);
 
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
 
         mt.setPage(pageable.getPageNumber() + 1);
         mt.setPageSize(pageable.getPageSize());
-
-        mt.setPages(pageUser.getTotalPages());
-        mt.setTotal(pageUser.getTotalElements());
+        mt.setPages(pageJob.getTotalPages());
+        mt.setTotal(pageJob.getTotalElements());
 
         rs.setMeta(mt);
-
-        rs.setResult(pageUser.getContent());
+        rs.setResult(pageJob.getContent());
 
         return rs;
     }
+
 }

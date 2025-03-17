@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.turkraft.springfilter.boot.Filter;
@@ -25,6 +26,7 @@ import vn.hstore.jobhunter.domain.response.job.ResCreateJobDTO;
 import vn.hstore.jobhunter.domain.response.job.ResUpdateJobDTO;
 import vn.hstore.jobhunter.service.JobService;
 import vn.hstore.jobhunter.util.annotation.ApiMessage;
+import vn.hstore.jobhunter.util.constant.LevelEnum;
 import vn.hstore.jobhunter.util.error.IdInvalidException;
 
 @RestController
@@ -95,8 +97,12 @@ public class JobController {
     @ApiMessage("Get job with pagination")
     public ResponseEntity<ResultPaginationDTO> getAllJob(
             @Filter Specification<Job> spec,
-            Pageable pageable) {
+            Pageable pageable,
+            @RequestParam(required = false) LevelEnum level,
+            @RequestParam(required = false) Double minSalary,
+            @RequestParam(required = false) Double maxSalary) {
 
-        return ResponseEntity.ok().body(this.jobService.fetchAll(spec, pageable));
+        return ResponseEntity.ok().body(this.jobService.fetchAll(spec, pageable, level, minSalary, maxSalary));
     }
+
 }

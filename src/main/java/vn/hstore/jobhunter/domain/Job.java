@@ -74,6 +74,9 @@ public class Job {
     @OneToMany(mappedBy = "job", fetch = FetchType.LAZY)
     @JsonIgnore
     List<Resume> resumes;
+    @OneToMany(mappedBy = "job", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<FavouriteJob> favoritedByUsers;
 
     @PrePersist
     public void handleBeforeCreate() {
