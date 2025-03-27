@@ -1,6 +1,8 @@
 package vn.hstore.jobhunter.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -8,11 +10,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import vn.hstore.jobhunter.domain.Company;
 import vn.hstore.jobhunter.domain.Job;
 import vn.hstore.jobhunter.domain.Skill;
 import vn.hstore.jobhunter.domain.Subscriber;
+import vn.hstore.jobhunter.domain.User;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hstore.jobhunter.domain.response.email.ResEmailJob;
 import vn.hstore.jobhunter.domain.response.job.ResCreateJobDTO;
@@ -22,8 +26,11 @@ import vn.hstore.jobhunter.repository.JobRepository;
 import vn.hstore.jobhunter.repository.ResumeRepository;
 import vn.hstore.jobhunter.repository.SkillRepository;
 import vn.hstore.jobhunter.repository.SubscriberRepository;
+import vn.hstore.jobhunter.repository.UserRepository;
 import vn.hstore.jobhunter.util.JobSpecification;
+import vn.hstore.jobhunter.util.SecurityUtil;
 import vn.hstore.jobhunter.util.constant.LevelEnum;
+import vn.hstore.jobhunter.util.error.QuotaExceededException;
 
 @Service
 public class JobService {
@@ -34,26 +41,56 @@ public class JobService {
     private final ResumeRepository resumeRepository;
     private final EmailService emailService;
     private final SubscriberRepository subscriberRepository;
+    private final UserRepository userRepository;
+    private final EmployerSubscriptionService employerSubscriptionService;
 
     public JobService(JobRepository jobRepository,
             SkillRepository skillRepository,
             CompanyRepository companyRepository,
             ResumeRepository resumeRepository,
             EmailService emailService,
-            SubscriberRepository subscriberRepository) {
+            SubscriberRepository subscriberRepository,
+            UserRepository userRepository,
+            EmployerSubscriptionService employerSubscriptionService) {
         this.resumeRepository = resumeRepository;
         this.jobRepository = jobRepository;
         this.skillRepository = skillRepository;
         this.companyRepository = companyRepository;
         this.emailService = emailService;
         this.subscriberRepository = subscriberRepository;
+        this.userRepository = userRepository;
+        this.employerSubscriptionService = employerSubscriptionService;
     }
 
     public Optional<Job> fetchJobById(long id) {
         return this.jobRepository.findById(id);
     }
 
-    public ResCreateJobDTO create(Job j) {
+    @Transactional
+    public ResCreateJobDTO create(Job j) throws QuotaExceededException {
+        // Lấy thông tin người dùng hiện tại
+        String currentUsername = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new RuntimeException("Không có thông tin người dùng hiện tại"));
+        
+        User currentUser = userRepository.findByEmail(currentUsername);
+        if (currentUser == null) {
+            throw new RuntimeException("Không tìm thấy thông tin người dùng");
+        }
+        
+        // Kiểm tra công ty
+        if (j.getCompany() == null || j.getCompany().getId() == null) {
+            throw new RuntimeException("Thông tin công ty không hợp lệ");
+        }
+        
+        // Kiểm tra quota đăng tin
+        Map<String, Object> quotaCheck = employerSubscriptionService.checkAndUpdateJobPostingQuota(
+                currentUser.getId(), j.getCompany().getId());
+        
+        boolean canPost = (boolean) quotaCheck.getOrDefault("canPost", false);
+        if (!canPost) {
+            throw new QuotaExceededException((String) quotaCheck.get("message"));
+        }
+        
         // check skills
         if (j.getSkills() != null) {
             List<Long> reqSkills = j.getSkills()
@@ -96,6 +133,9 @@ public class JobService {
                     .collect(Collectors.toList());
             dto.setSkills(skills);
         }
+
+        // Add quota information to response
+        dto.setQuotaMessage((String) quotaCheck.get("message"));
 
         return dto;
     }
@@ -237,6 +277,51 @@ public class JobService {
         rs.setResult(pageJob.getContent());
 
         return rs;
+    }
+
+    /**
+     * Gets comprehensive statistics about jobs in the system
+     * @return Map containing various job statistics
+     */
+    public Map<String, Object> getJobStatistics() {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // Get total counts
+        statistics.put("totalJobs", jobRepository.countTotalJobs());
+        statistics.put("activeJobs", jobRepository.countActiveJobs());
+        
+        // Get counts by level
+        List<Map<String, Object>> levelCounts = jobRepository.countJobsByLevel();
+        statistics.put("jobsByLevel", levelCounts);
+        
+        // Get counts by location
+        List<Map<String, Object>> locationCounts = jobRepository.countJobsByLocation();
+        statistics.put("jobsByLocation", locationCounts);
+        
+        // Get average salary
+        statistics.put("averageSalary", jobRepository.getAverageSalary());
+        
+        // Get top companies with most jobs
+        List<Map<String, Object>> companyJobs = jobRepository.countJobsByCompany();
+        statistics.put("jobsByCompany", companyJobs);
+        
+        return statistics;
+    }
+
+    /**
+     * Returns the job repository
+     * @return the job repository
+     */
+    public JobRepository getJobRepository() {
+        return jobRepository;
+    }
+
+    /**
+     * Gets the total number of jobs in the system
+     * @return total count of jobs
+     */
+    public long getTotalJobCount() {
+        return jobRepository.countTotalJobs();
     }
 
 }

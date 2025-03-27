@@ -1,9 +1,11 @@
 package vn.hstore.jobhunter.repository;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import vn.hstore.jobhunter.domain.Company;
@@ -17,6 +19,24 @@ public interface JobRepository extends JpaRepository<Job, Long>,
     List<Job> findBySkillsIn(List<Skill> skills);
 
     List<Job> findByCompany(Company company);
+
+    @Query("SELECT COUNT(j) FROM Job j")
+    long countTotalJobs();
+    
+    @Query("SELECT COUNT(j) FROM Job j WHERE j.active = true")
+    long countActiveJobs();
+    
+    @Query("SELECT j.level as level, COUNT(j) as count FROM Job j GROUP BY j.level")
+    List<Map<String, Object>> countJobsByLevel();
+    
+    @Query("SELECT j.location as location, COUNT(j) as count FROM Job j GROUP BY j.location")
+    List<Map<String, Object>> countJobsByLocation();
+    
+    @Query("SELECT AVG(j.salary) FROM Job j")
+    double getAverageSalary();
+    
+    @Query("SELECT c.name as companyName, COUNT(j) as jobCount FROM Job j JOIN j.company c GROUP BY c.name ORDER BY jobCount DESC")
+    List<Map<String, Object>> countJobsByCompany();
 
     // @Query("SELECT j.industry, j.title as jobTitle, COUNT(j) as jobCount, " +
     //        "AVG(j.salary) as averageSalary, j.location, GROUP_CONCAT(j.skills) as skills " +

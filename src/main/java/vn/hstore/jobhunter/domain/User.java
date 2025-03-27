@@ -78,6 +78,10 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
+    // Thêm quan hệ với CV
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<CV> cvs;
 
     @PrePersist
     public void handleBeforeCreate() {
@@ -95,5 +99,10 @@ public class User {
                 : "";
 
         this.updatedAt = Instant.now();
+    }
+
+    public User orElseThrow(Object object) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
     }
 }

@@ -30,4 +30,6 @@ public class ResCreateJobDTO {
 
     private Instant createdAt;
     private String createdBy;
+
+    private String quotaMessage;
 }

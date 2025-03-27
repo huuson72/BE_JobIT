@@ -45,40 +45,59 @@ public class SecurityConfiguration {
 
         String[] whiteList = {
             "/",
-            "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register",
+            "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register", "/api/v1/auth/register-employer", "/api/v1/auth/employer-register",
+            "/api/status",
             "/storage/**",
             "/api/v1/email/**",
+            "/api/v1/files", "/api/v1/files/**",
+            "/api/v1/packages", "/api/v1/packages/*", 
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+            "/api/v1/payments/vnpay-callback"
         };
 
         http
                 .csrf(c -> c.disable())
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(
-                        authz -> authz
-                                .requestMatchers(HttpMethod.PUT, "/api/v1/users/{id}/info").authenticated()
-                                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "HR", "MANAGER")
-                                .requestMatchers(HttpMethod.GET, "/api/v1/companies/**").permitAll()
-                                // .requestMatchers("/api/v1/admin/dashboard-stats").permitAll()
-                                // .requestMatchers(HttpMethod.GET, "/api/v1/email/**").permitAll()
-                                .requestMatchers("/api/favorites/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated() // Yêu cầu xác thực
-                                .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll() // Cho phép truy cập công khai
-                                .requestMatchers(whiteList).permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/companies/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/jobs/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/skills/**").permitAll()
-                                .anyRequest().authenticated())
+                .authorizeHttpRequests(authz -> authz
+                // Whitelist - luôn cho phép
+                .requestMatchers(whiteList).permitAll()
+                
+                // Public APIs - không cần xác thực
+                .requestMatchers(HttpMethod.GET, "/api/v1/packages").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/packages/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/companies/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/jobs/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/skills/**").permitAll()
+                
+                // APIs cần xác thực người dùng
+                .requestMatchers(HttpMethod.PUT, "/api/v1/users/{id}/info").authenticated()
+                .requestMatchers("/api/v1/cvs/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/gencv/create").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/gencv/preview/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/gencv/download/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/employer/subscribe").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/employer/{userId}/subscriptions").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/employer/{userId}/company/{companyId}/status").authenticated()
+                .requestMatchers("/api/favorites/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/jobs").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/jobs").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/jobs/**").authenticated()
+                
+                // APIs chỉ dành cho admin
+                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "HR", "MANAGER")
+                .requestMatchers(HttpMethod.POST, "/api/v1/packages").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/packages/{id}").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/packages/{id}").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/packages/all").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                
+                // Mặc định cần xác thực cho tất cả API còn lại
+                .anyRequest().authenticated())
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt(Customizer.withDefaults())
                 .authenticationEntryPoint(customAuthenticationEntryPoint))
-                // .exceptionHandling(
-                // exceptions -> exceptions
-                // .authenticationEntryPoint(customAuthenticationEntryPoint) // 401
-                // .accessDeniedHandler(new BearerTokenAccessDeniedHandler())) // 403
-
-                .formLogin(f -> f.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();

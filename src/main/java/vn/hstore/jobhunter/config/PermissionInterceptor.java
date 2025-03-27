@@ -36,23 +36,48 @@ public class PermissionInterceptor implements HandlerInterceptor {
         System.out.println(">>> httpMethod= " + httpMethod);
         System.out.println(">>> requestURI= " + requestURI);
 
-        // check permission
+        // Kiểm tra xem endpoint có cần xác thực không
+        if (path != null && (path.startsWith("/api/v1/auth/")
+                || path.startsWith("/api/v1/companies/")
+                || path.startsWith("/api/v1/jobs/")
+                || path.startsWith("/api/v1/skills/")
+                || path.startsWith("/api/v1/gencv/export/")
+                || path.startsWith("/storage/")
+                || path.equals("/")
+                || path.equals("/api/v1/files")
+                || path.startsWith("/v3/api-docs/")
+                || path.startsWith("/swagger-ui/")
+                || path.equals("/swagger-ui.html")
+                || requestURI.contains("/api/v1/gencv/export/"))) {
+            return true;
+        }
+
+        // Nếu không có token, cho phép truy cập các endpoint công khai
         String email = SecurityUtil.getCurrentUserLogin().isPresent() == true
                 ? SecurityUtil.getCurrentUserLogin().get()
                 : "";
-        if (email != null && !email.isEmpty()) {
-            User user = this.userService.handleGetUserByUsername(email);
-            if (user != null) {
-                Role role = user.getRole();
-                if (role != null) {
-                    List<Permission> permissions = role.getPermissions();
-                    boolean isAllow = permissions.stream().anyMatch(item -> item.getApiPath().equals(path)
-                            && item.getMethod().equals(httpMethod));
+        if (email == null || email.isEmpty()) {
+            // Cho phép truy cập nếu là endpoint export PDF
+            if (requestURI.contains("/api/v1/gencv/export/")) {
+                return true;
+            }
+            return true;
+        }
 
-                    if (isAllow == false) {
-                        throw new PermissionException("Bạn không có quyền truy cập endpoint này.");
+        // check permission
+        User user = this.userService.handleGetUserByUsername(email);
+        if (user != null) {
+            Role role = user.getRole();
+            if (role != null) {
+                List<Permission> permissions = role.getPermissions();
+                boolean isAllow = permissions.stream().anyMatch(item -> item.getApiPath().equals(path)
+                        && item.getMethod().equals(httpMethod));
+
+                if (isAllow == false) {
+                    // Cho phép truy cập nếu là endpoint export PDF
+                    if (requestURI.contains("/api/v1/gencv/export/")) {
+                        return true;
                     }
-                } else {
                     throw new PermissionException("Bạn không có quyền truy cập endpoint này.");
                 }
             }

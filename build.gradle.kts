@@ -29,6 +29,12 @@ dependencies {
 	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 	implementation("com.turkraft.springfilter:jpa:3.1.7")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
+	implementation("com.itextpdf:itext7-core:7.2.5")
+	 // Thư viện hỗ trợ render HTML thành PDF
+    implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
+
+    // Thư viện hỗ trợ xử lý JSON (cho dữ liệu người dùng nhập)
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -38,3 +44,7 @@ dependencies {
 tasks.withType<Test> {
 	useJUnitPlatform()
 }
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+}
+

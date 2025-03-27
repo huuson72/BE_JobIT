@@ -2,8 +2,11 @@ package vn.hstore.jobhunter.util.error;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.nio.charset.StandardCharsets;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,27 +17,34 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import jakarta.servlet.http.HttpServletRequest;
 import vn.hstore.jobhunter.domain.response.RestResponse;
 
 @RestControllerAdvice
 public class GlobalException {
 
-    // handle all exception
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<RestResponse<Object>> handleAllException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
+    public ResponseEntity<?> handleAllException(Exception ex, HttpServletRequest request) {
+        // Log lỗi để debug
+        ex.printStackTrace();
+        
+        // Xử lý chung cho tất cả các endpoint
+        RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
         res.setMessage(ex.getMessage());
         res.setError("Internal Server Error");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+        res.setData(null);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(res);
     }
 
     @ExceptionHandler(value = {
         UsernameNotFoundException.class,
         BadCredentialsException.class,
-        IdInvalidException.class,})
+        IdInvalidException.class})
     public ResponseEntity<RestResponse<Object>> handleIdException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
+        RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(ex.getMessage());
         res.setError("Exception occurs...");
@@ -42,9 +52,9 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = {
-        NoResourceFoundException.class,})
+        NoResourceFoundException.class})
     public ResponseEntity<RestResponse<Object>> handleNotFoundException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
+        RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.NOT_FOUND.value());
         res.setMessage(ex.getMessage());
         res.setError("404 Not Found. URL may not exist...");
@@ -56,7 +66,7 @@ public class GlobalException {
         BindingResult result = ex.getBindingResult();
         final List<FieldError> fieldErrors = result.getFieldErrors();
 
-        RestResponse<Object> res = new RestResponse<Object>();
+        RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setError(ex.getBody().getDetail());
 
@@ -67,9 +77,9 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = {
-        StorageException.class,})
+        StorageException.class})
     public ResponseEntity<RestResponse<Object>> handleFileUploadException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
+        RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(ex.getMessage());
         res.setError("Exception upload file...");
@@ -77,9 +87,9 @@ public class GlobalException {
     }
 
     @ExceptionHandler(value = {
-        PermissionException.class,})
+        PermissionException.class})
     public ResponseEntity<RestResponse<Object>> handlePermissionException(Exception ex) {
-        RestResponse<Object> res = new RestResponse<Object>();
+        RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.FORBIDDEN.value());
         res.setError("Forbidden");
         res.setMessage(ex.getMessage());

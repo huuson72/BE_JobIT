@@ -22,12 +22,14 @@ import com.turkraft.springfilter.boot.Filter;
 import jakarta.validation.Valid;
 import vn.hstore.jobhunter.domain.Job;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
+import vn.hstore.jobhunter.domain.response.RestResponse;
 import vn.hstore.jobhunter.domain.response.job.ResCreateJobDTO;
 import vn.hstore.jobhunter.domain.response.job.ResUpdateJobDTO;
 import vn.hstore.jobhunter.service.JobService;
 import vn.hstore.jobhunter.util.annotation.ApiMessage;
 import vn.hstore.jobhunter.util.constant.LevelEnum;
 import vn.hstore.jobhunter.util.error.IdInvalidException;
+import vn.hstore.jobhunter.util.error.QuotaExceededException;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -41,9 +43,29 @@ public class JobController {
 
     @PostMapping("/jobs")
     @ApiMessage("Create a job")
-    public ResponseEntity<ResCreateJobDTO> create(@Valid @RequestBody Job job) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.jobService.create(job));
+    public ResponseEntity<?> create(@Valid @RequestBody Job job) {
+        try {
+            ResCreateJobDTO createdJob = this.jobService.create(job);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdJob);
+        } catch (QuotaExceededException e) {
+            // Return specific error for quota exceeded
+            RestResponse<Object> errorResponse = new RestResponse<>();
+            errorResponse.setStatusCode(403);
+            errorResponse.setError("Quota Exceeded");
+            errorResponse.setMessage(e.getMessage());
+            errorResponse.setData(null);
+            
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+        } catch (Exception e) {
+            // General error handling
+            RestResponse<Object> errorResponse = new RestResponse<>();
+            errorResponse.setStatusCode(500);
+            errorResponse.setError("Internal Server Error");
+            errorResponse.setMessage(e.getMessage());
+            errorResponse.setData(null);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
     @PutMapping("/jobs")
@@ -103,6 +125,54 @@ public class JobController {
             @RequestParam(required = false) Double maxSalary) {
 
         return ResponseEntity.ok().body(this.jobService.fetchAll(spec, pageable, level, minSalary, maxSalary));
+    }
+
+    @GetMapping("/jobs/statistics")
+    @ApiMessage("Get job statistics")
+    public ResponseEntity<?> getJobStatistics() {
+        try {
+            Map<String, Object> statistics = this.jobService.getJobStatistics();
+            
+            RestResponse<Map<String, Object>> response = new RestResponse<>();
+            response.setStatusCode(200);
+            response.setError(null);
+            response.setMessage("Lấy thống kê công việc thành công");
+            response.setData(statistics);
+            
+            return ResponseEntity.ok().body(response);
+        } catch (Exception e) {
+            RestResponse<Object> errorResponse = new RestResponse<>();
+            errorResponse.setStatusCode(500);
+            errorResponse.setError("Internal Server Error");
+            errorResponse.setMessage(e.getMessage());
+            errorResponse.setData(null);
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+
+    @GetMapping("/jobs/count")
+    @ApiMessage("Get total number of jobs")
+    public ResponseEntity<?> getTotalJobCount() {
+        try {
+            long totalJobs = this.jobService.getTotalJobCount();
+            
+            RestResponse<Long> response = new RestResponse<>();
+            response.setStatusCode(200);
+            response.setError(null);
+            response.setMessage("Lấy tổng số công việc thành công");
+            response.setData(totalJobs);
+            
+            return ResponseEntity.ok().body(response);
+        } catch (Exception e) {
+            RestResponse<Object> errorResponse = new RestResponse<>();
+            errorResponse.setStatusCode(500);
+            errorResponse.setError("Internal Server Error");
+            errorResponse.setMessage(e.getMessage());
+            errorResponse.setData(null);
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
     }
 
 }

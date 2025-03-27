@@ -77,6 +77,10 @@ public class Job {
     @OneToMany(mappedBy = "job", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<FavouriteJob> favoritedByUsers;
+// Thêm quan hệ với CV
+    @OneToMany(mappedBy = "job", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<CV> cvs;
 
     @PrePersist
     public void handleBeforeCreate() {
