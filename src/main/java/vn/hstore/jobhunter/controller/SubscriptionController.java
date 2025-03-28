@@ -1,5 +1,6 @@
 package vn.hstore.jobhunter.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +28,7 @@ import vn.hstore.jobhunter.domain.response.RestResponse;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hstore.jobhunter.service.EmployerSubscriptionService;
 import vn.hstore.jobhunter.service.SubscriptionPackageService;
+import vn.hstore.jobhunter.service.PromotionService;
 import vn.hstore.jobhunter.util.annotation.ApiMessage;
 
 @RestController
@@ -35,12 +37,15 @@ public class SubscriptionController {
 
     private final SubscriptionPackageService subscriptionPackageService;
     private final EmployerSubscriptionService employerSubscriptionService;
+    private final PromotionService promotionService;
 
     public SubscriptionController(
             SubscriptionPackageService subscriptionPackageService,
-            EmployerSubscriptionService employerSubscriptionService) {
+            EmployerSubscriptionService employerSubscriptionService,
+            PromotionService promotionService) {
         this.subscriptionPackageService = subscriptionPackageService;
         this.employerSubscriptionService = employerSubscriptionService;
+        this.promotionService = promotionService;
     }
 
     // ========= SUBSCRIPTION PACKAGES MANAGEMENT =========
@@ -162,6 +167,51 @@ public class SubscriptionController {
         response.setData(null);
         
         return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/packages/{id}/price-with-discount")
+    @ApiMessage("Get subscription package price with best available promotion discount")
+    public ResponseEntity<RestResponse<Map<String, Object>>> getPackagePriceWithDiscount(@PathVariable("id") Long id) {
+        try {
+            Optional<SubscriptionPackage> packageOpt = subscriptionPackageService.findById(id);
+            
+            if (!packageOpt.isPresent()) {
+                RestResponse<Map<String, Object>> errorResponse = new RestResponse<>();
+                errorResponse.setStatusCode(404);
+                errorResponse.setError("Not Found");
+                errorResponse.setMessage("Không tìm thấy gói VIP với ID: " + id);
+                errorResponse.setData(null);
+                
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            }
+            
+            PromotionService.DiscountResult discountResult = promotionService.calculateDiscountedPrice(id);
+            
+            Map<String, Object> result = Map.of(
+                "packageId", id,
+                "packageName", packageOpt.get().getName(),
+                "originalPrice", discountResult.getOriginalPrice(),
+                "finalPrice", discountResult.getFinalPrice(),
+                "discountPercentage", discountResult.getDiscountPercentage(),
+                "promotionName", discountResult.getPromotionName() != null ? discountResult.getPromotionName() : ""
+            );
+            
+            RestResponse<Map<String, Object>> response = new RestResponse<>();
+            response.setStatusCode(200);
+            response.setError(null);
+            response.setMessage("Lấy thông tin giá gói VIP sau khi áp dụng ưu đãi thành công");
+            response.setData(result);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            RestResponse<Map<String, Object>> errorResponse = new RestResponse<>();
+            errorResponse.setStatusCode(400);
+            errorResponse.setError("Bad Request");
+            errorResponse.setMessage("Lỗi khi tính giá ưu đãi: " + e.getMessage());
+            errorResponse.setData(null);
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
     }
     
     // ========= EMPLOYER SUBSCRIPTION MANAGEMENT =========

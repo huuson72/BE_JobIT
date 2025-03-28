@@ -1,7 +1,6 @@
 package vn.hstore.jobhunter.controller;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -26,7 +25,6 @@ import vn.hstore.jobhunter.dto.PaymentRequestDTO;
 import vn.hstore.jobhunter.repository.SubscriptionRepository;
 import vn.hstore.jobhunter.repository.TransactionRepository;
 import vn.hstore.jobhunter.service.VNPayService;
-import vn.hstore.jobhunter.service.PromotionService;
 
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -41,33 +39,13 @@ public class PaymentController {
     @Autowired
     private SubscriptionRepository subscriptionRepository;
 
-    @Autowired
-    private PromotionService promotionService;
-
     @PostMapping("/create")
     public ResponseEntity<?> createPayment(@RequestBody PaymentRequestDTO paymentRequest) {
         try {
-            // Tính toán giá sau khi áp dụng ưu đãi
-            BigDecimal finalAmount = promotionService.calculateDiscountedPrice(
-                paymentRequest.getPackageId(), 
-                paymentRequest.getPromotionCode()
-            );
-            
-            // Cập nhật số tiền trong paymentRequest
-            paymentRequest.setAmount(finalAmount.doubleValue());
-            
             String paymentUrl = vnPayService.createPaymentUrl(paymentRequest);
-            return ResponseEntity.ok().body(Map.of(
-                "paymentUrl", paymentUrl,
-                "originalAmount", paymentRequest.getOriginalAmount(),
-                "discountedAmount", finalAmount,
-                "success", true
-            ));
+            return ResponseEntity.ok().body(paymentUrl);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "message", "Lỗi khi tạo thanh toán: " + e.getMessage(),
-                "success", false
-            ));
+            return ResponseEntity.badRequest().body("Error creating payment: " + e.getMessage());
         }
     }
 

@@ -1,6 +1,7 @@
 package vn.hstore.jobhunter.domain;
 
 import java.time.Instant;
+import java.math.BigDecimal;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -49,11 +50,18 @@ public class EmployerSubscription {
     
     private Integer remainingPosts;
     
-    private Boolean isActive = true;
+    private String status = "ACTIVE";
     
     private String transactionId;
     
     private String paymentMethod;
+    
+    @NotNull(message = "Số tiền không được để trống")
+    private BigDecimal amount;
+    
+    private BigDecimal originalAmount; // Giá gốc trước khi giảm giá
+    
+    private Double discountPercentage; // Phần trăm giảm giá đã áp dụng
     
     private Instant createdAt;
     private Instant updatedAt;
@@ -66,6 +74,7 @@ public class EmployerSubscription {
                 ? SecurityUtil.getCurrentUserLogin().get()
                 : "";
         this.createdAt = Instant.now();
+        this.remainingPosts = this.subscriptionPackage != null ? this.subscriptionPackage.getJobPostLimit() : 0;
     }
 
     @PreUpdate

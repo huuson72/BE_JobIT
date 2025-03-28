@@ -1,5 +1,6 @@
 package vn.hstore.jobhunter.service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,54 +23,65 @@ import vn.hstore.jobhunter.repository.EmployerSubscriptionRepository;
 import vn.hstore.jobhunter.repository.JobPostingUsageRepository;
 import vn.hstore.jobhunter.repository.SubscriptionPackageRepository;
 import vn.hstore.jobhunter.repository.UserRepository;
+import vn.hstore.jobhunter.service.PromotionService.DiscountResult;
 
 @Service
 public class EmployerSubscriptionService {
 
-    private final EmployerSubscriptionRepository employerSubscriptionRepository;
-    private final JobPostingUsageRepository jobPostingUsageRepository;
-    private final UserRepository userRepository;
-    private final CompanyRepository companyRepository;
-    private final SubscriptionPackageRepository subscriptionPackageRepository;
+    @Autowired
+    private EmployerSubscriptionRepository employerSubscriptionRepository;
 
-    public EmployerSubscriptionService(
-            EmployerSubscriptionRepository employerSubscriptionRepository,
-            JobPostingUsageRepository jobPostingUsageRepository,
-            UserRepository userRepository,
-            CompanyRepository companyRepository,
-            SubscriptionPackageRepository subscriptionPackageRepository) {
-        this.employerSubscriptionRepository = employerSubscriptionRepository;
-        this.jobPostingUsageRepository = jobPostingUsageRepository;
-        this.userRepository = userRepository;
-        this.companyRepository = companyRepository;
-        this.subscriptionPackageRepository = subscriptionPackageRepository;
-    }
-    
+    @Autowired
+    private JobPostingUsageRepository jobPostingUsageRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CompanyRepository companyRepository;
+
+    @Autowired
+    private SubscriptionPackageRepository subscriptionPackageRepository;
+
+    @Autowired
+    private PromotionService promotionService;
+
     @Transactional
-    public EmployerSubscription purchaseSubscription(Long userId, Long companyId, Long packageId, String paymentMethod) {
+    public EmployerSubscription purchaseSubscription(
+            Long userId, 
+            Long companyId, 
+            Long packageId,
+            String paymentMethod) {
+        
+        // Kiểm tra user tồn tại
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
-        
+
+        // Kiểm tra công ty tồn tại
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty"));
         
+        // Kiểm tra gói VIP tồn tại
         SubscriptionPackage subscriptionPackage = subscriptionPackageRepository.findById(packageId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy gói đăng ký"));
-        
-        Instant now = Instant.now();
-        Instant endDate = now.plus(subscriptionPackage.getDurationDays(), ChronoUnit.DAYS);
-        
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy gói VIP"));
+
+        // Tính toán giá sau khi áp dụng ưu đãi
+        DiscountResult discountResult = promotionService.calculateDiscountedPrice(packageId);
+
+        // Tạo subscription mới
         EmployerSubscription subscription = new EmployerSubscription();
         subscription.setUser(user);
         subscription.setCompany(company);
         subscription.setSubscriptionPackage(subscriptionPackage);
-        subscription.setStartDate(now);
-        subscription.setEndDate(endDate);
-        subscription.setRemainingPosts(subscriptionPackage.getJobPostLimit());
-        subscription.setIsActive(true);
+        subscription.setStartDate(Instant.now());
+        subscription.setEndDate(Instant.now().plusSeconds(subscriptionPackage.getDurationDays() * 24 * 60 * 60));
         subscription.setPaymentMethod(paymentMethod);
-        subscription.setTransactionId("TXN-" + now.toEpochMilli()); // Giả lập mã giao dịch
-        
+        subscription.setAmount(discountResult.getFinalPrice());
+        subscription.setOriginalAmount(discountResult.getOriginalPrice());
+        subscription.setDiscountPercentage(discountResult.getDiscountPercentage());
+        subscription.setStatus("ACTIVE");
+        subscription.setRemainingPosts(subscriptionPackage.getJobPostLimit());
+
         return employerSubscriptionRepository.save(subscription);
     }
     
@@ -123,7 +136,7 @@ public class EmployerSubscriptionService {
         // Nếu đã hết quota miễn phí, kiểm tra gói VIP
         Instant now = Instant.now();
         List<EmployerSubscription> activeSubscriptions = employerSubscriptionRepository
-                .findActiveSubscriptionsByUserId(userId, now);
+                .findByUserIdAndStatusAndEndDateAfter(userId, "ACTIVE", now);
         
         if (activeSubscriptions.isEmpty()) {
             result.put("message", "Bạn đã hết lượt đăng miễn phí hôm nay. Vui lòng mua gói VIP để đăng thêm.");
@@ -152,42 +165,31 @@ public class EmployerSubscriptionService {
     }
     
     public List<EmployerSubscription> getActiveSubscriptionsByUserId(Long userId) {
-        return employerSubscriptionRepository.findActiveSubscriptionsByUserId(userId, Instant.now());
+        return employerSubscriptionRepository.findByUserIdAndStatusAndEndDateAfter(
+                userId, "ACTIVE", Instant.now());
     }
     
     public Map<String, Object> getEmployerSubscriptionStatus(Long userId, Long companyId) {
-        Map<String, Object> status = new HashMap<>();
+        List<EmployerSubscription> activeSubscriptions = getActiveSubscriptionsByUserId(userId);
         
-        // Kiểm tra quota miễn phí hôm nay
-        LocalDate today = LocalDate.now();
-        Optional<JobPostingUsage> usageOpt = jobPostingUsageRepository.findByUserAndCompanyAndPostingDate(
-                userRepository.findById(userId).orElse(null), 
-                companyRepository.findById(companyId).orElse(null), 
-                today);
+        boolean hasActiveSubscription = activeSubscriptions.stream()
+                .anyMatch(sub -> sub.getCompany().getId().equals(companyId));
         
-        int usedFreeToday = 0;
-        int freeLimit = 3;
-        
-        if (usageOpt.isPresent()) {
-            JobPostingUsage usage = usageOpt.get();
-            usedFreeToday = usage.getUsedCount();
-            freeLimit = usage.getFreeLimit();
+        int remainingJobPosts = 0;
+        if (hasActiveSubscription) {
+            EmployerSubscription subscription = activeSubscriptions.stream()
+                    .filter(sub -> sub.getCompany().getId().equals(companyId))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (subscription != null) {
+                remainingJobPosts = subscription.getSubscriptionPackage().getJobPostLimit();
+            }
         }
-        
-        status.put("freeQuotaToday", freeLimit);
-        status.put("usedFreeToday", usedFreeToday);
-        status.put("remainingFreeToday", freeLimit - usedFreeToday);
-        
-        // Thông tin gói VIP
-        List<EmployerSubscription> activeSubscriptions = employerSubscriptionRepository
-                .findActiveSubscriptionsByUserId(userId, Instant.now());
-        
-        int totalVipRemaining = getTotalRemainingPostsByUserId(userId);
-        
-        status.put("hasVipPackage", !activeSubscriptions.isEmpty());
-        status.put("totalVipRemaining", totalVipRemaining);
-        status.put("activeSubscriptions", activeSubscriptions);
-        
-        return status;
+
+        return Map.of(
+                "hasActiveSubscription", hasActiveSubscription,
+                "remainingJobPosts", remainingJobPosts
+        );
     }
 } 

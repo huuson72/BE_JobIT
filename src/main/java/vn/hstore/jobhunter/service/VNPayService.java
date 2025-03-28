@@ -19,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.math.BigDecimal;
 
 @Service
 public class VNPayService {
@@ -55,7 +54,7 @@ public class VNPayService {
         // Lưu thông tin giao dịch
         Transaction transaction = new Transaction();
         transaction.setOrderId(vnp_TxnRef);
-        transaction.setAmount(BigDecimal.valueOf(paymentRequest.getAmount()).longValue());
+        transaction.setAmount(paymentRequest.getAmount());
         transaction.setOrderInfo(paymentRequest.getOrderInfo());
         transaction.setStatus("PENDING");
         transaction.setCreatedAt(LocalDateTime.now());
