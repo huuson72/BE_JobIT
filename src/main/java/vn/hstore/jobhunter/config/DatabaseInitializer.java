@@ -118,7 +118,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             arr.add(new Permission("Delete promotion", "/api/v1/promotions/{id}", "DELETE", "PROMOTIONS"));
             arr.add(new Permission("Get promotions by package", "/api/v1/promotions/package/{packageId}", "GET", "PROMOTIONS"));
             arr.add(new Permission("Get active promotions", "/api/v1/promotions/active", "GET", "PROMOTIONS"));
-
+            arr.add(new Permission("Get admin statistics", "/api/v1/admin/api-statistics", "GET", "ADMIN_STATISTICS"));
             this.permissionRepository.saveAll(arr);
         }
 

@@ -21,8 +21,8 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import vn.hstore.jobhunter.domain.Job;
-import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hstore.jobhunter.domain.response.RestResponse;
+import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hstore.jobhunter.domain.response.job.ResCreateJobDTO;
 import vn.hstore.jobhunter.domain.response.job.ResUpdateJobDTO;
 import vn.hstore.jobhunter.service.JobService;
@@ -54,7 +54,7 @@ public class JobController {
             errorResponse.setError("Quota Exceeded");
             errorResponse.setMessage(e.getMessage());
             errorResponse.setData(null);
-            
+
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
         } catch (Exception e) {
             // General error handling
@@ -63,7 +63,7 @@ public class JobController {
             errorResponse.setError("Internal Server Error");
             errorResponse.setMessage(e.getMessage());
             errorResponse.setData(null);
-            
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
@@ -120,9 +120,9 @@ public class JobController {
     public ResponseEntity<ResultPaginationDTO> getAllJob(
             @Filter Specification<Job> spec,
             Pageable pageable,
-            @RequestParam(required = false) LevelEnum level,
-            @RequestParam(required = false) Double minSalary,
-            @RequestParam(required = false) Double maxSalary) {
+            @RequestParam(required = false, name = "level") LevelEnum level,
+            @RequestParam(required = false, name = "minSalary") Double minSalary,
+            @RequestParam(required = false, name = "maxSalary") Double maxSalary) {
 
         return ResponseEntity.ok().body(this.jobService.fetchAll(spec, pageable, level, minSalary, maxSalary));
     }
@@ -132,13 +132,13 @@ public class JobController {
     public ResponseEntity<?> getJobStatistics() {
         try {
             Map<String, Object> statistics = this.jobService.getJobStatistics();
-            
+
             RestResponse<Map<String, Object>> response = new RestResponse<>();
             response.setStatusCode(200);
             response.setError(null);
             response.setMessage("Lấy thống kê công việc thành công");
             response.setData(statistics);
-            
+
             return ResponseEntity.ok().body(response);
         } catch (Exception e) {
             RestResponse<Object> errorResponse = new RestResponse<>();
@@ -146,7 +146,7 @@ public class JobController {
             errorResponse.setError("Internal Server Error");
             errorResponse.setMessage(e.getMessage());
             errorResponse.setData(null);
-            
+
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
@@ -156,13 +156,13 @@ public class JobController {
     public ResponseEntity<?> getTotalJobCount() {
         try {
             long totalJobs = this.jobService.getTotalJobCount();
-            
+
             RestResponse<Long> response = new RestResponse<>();
             response.setStatusCode(200);
             response.setError(null);
             response.setMessage("Lấy tổng số công việc thành công");
             response.setData(totalJobs);
-            
+
             return ResponseEntity.ok().body(response);
         } catch (Exception e) {
             RestResponse<Object> errorResponse = new RestResponse<>();
@@ -170,7 +170,7 @@ public class JobController {
             errorResponse.setError("Internal Server Error");
             errorResponse.setMessage(e.getMessage());
             errorResponse.setData(null);
-            
+
             return ResponseEntity.status(500).body(errorResponse);
         }
     }

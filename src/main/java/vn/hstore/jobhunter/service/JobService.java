@@ -71,26 +71,26 @@ public class JobService {
         // Lấy thông tin người dùng hiện tại
         String currentUsername = SecurityUtil.getCurrentUserLogin()
                 .orElseThrow(() -> new RuntimeException("Không có thông tin người dùng hiện tại"));
-        
+
         User currentUser = userRepository.findByEmail(currentUsername);
         if (currentUser == null) {
             throw new RuntimeException("Không tìm thấy thông tin người dùng");
         }
-        
+
         // Kiểm tra công ty
         if (j.getCompany() == null || j.getCompany().getId() == null) {
             throw new RuntimeException("Thông tin công ty không hợp lệ");
         }
-        
+
         // Kiểm tra quota đăng tin
         Map<String, Object> quotaCheck = employerSubscriptionService.checkAndUpdateJobPostingQuota(
                 currentUser.getId(), j.getCompany().getId());
-        
+
         boolean canPost = (boolean) quotaCheck.getOrDefault("canPost", false);
         if (!canPost) {
             throw new QuotaExceededException((String) quotaCheck.get("message"));
         }
-        
+
         // check skills
         if (j.getSkills() != null) {
             List<Long> reqSkills = j.getSkills()
@@ -281,35 +281,37 @@ public class JobService {
 
     /**
      * Gets comprehensive statistics about jobs in the system
+     *
      * @return Map containing various job statistics
      */
     public Map<String, Object> getJobStatistics() {
         Map<String, Object> statistics = new HashMap<>();
-        
+
         // Get total counts
         statistics.put("totalJobs", jobRepository.countTotalJobs());
         statistics.put("activeJobs", jobRepository.countActiveJobs());
-        
+
         // Get counts by level
         List<Map<String, Object>> levelCounts = jobRepository.countJobsByLevel();
         statistics.put("jobsByLevel", levelCounts);
-        
+
         // Get counts by location
         List<Map<String, Object>> locationCounts = jobRepository.countJobsByLocation();
         statistics.put("jobsByLocation", locationCounts);
-        
+
         // Get average salary
         statistics.put("averageSalary", jobRepository.getAverageSalary());
-        
+
         // Get top companies with most jobs
         List<Map<String, Object>> companyJobs = jobRepository.countJobsByCompany();
         statistics.put("jobsByCompany", companyJobs);
-        
+
         return statistics;
     }
 
     /**
      * Returns the job repository
+     *
      * @return the job repository
      */
     public JobRepository getJobRepository() {
@@ -318,6 +320,7 @@ public class JobService {
 
     /**
      * Gets the total number of jobs in the system
+     *
      * @return total count of jobs
      */
     public long getTotalJobCount() {
