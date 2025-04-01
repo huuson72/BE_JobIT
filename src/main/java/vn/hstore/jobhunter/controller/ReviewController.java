@@ -34,7 +34,8 @@ public class ReviewController {
     }
 
     @GetMapping("/company/{companyId}")
-    public ResponseEntity<List<ReviewDTO>> getReviewsByCompany(@PathVariable long companyId) {
+    public ResponseEntity<List<ReviewDTO>> getReviewsByCompany(
+            @PathVariable(name = "companyId") Long companyId) {
         return ResponseEntity.ok(reviewService.getReviewsByCompany(companyId));
     }
 }
