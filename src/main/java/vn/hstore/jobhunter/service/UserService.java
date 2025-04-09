@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import vn.hstore.jobhunter.domain.Company;
 import vn.hstore.jobhunter.domain.Role;
@@ -17,6 +18,7 @@ import vn.hstore.jobhunter.domain.response.ResUpdateUserDTO;
 import vn.hstore.jobhunter.domain.response.ResUserDTO;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hstore.jobhunter.repository.UserRepository;
+import vn.hstore.jobhunter.util.constant.VerificationStatus;
 
 @Service
 public class UserService {
@@ -239,5 +241,68 @@ public class UserService {
 
     public User getUserByRefreshTokenAndEmail(String token, String email) {
         return this.userRepository.findByRefreshTokenAndEmail(token, email);
+    }
+
+    /**
+     * Get the currently authenticated user.
+     * 
+     * @return the currently authenticated user, or null if not authenticated
+     */
+    public User getCurrentUser() {
+        Optional<String> currentUserLogin = vn.hstore.jobhunter.util.SecurityUtil.getCurrentUserLogin();
+        if (currentUserLogin.isPresent()) {
+            return this.handleGetUserByUsername(currentUserLogin.get());
+        }
+        return null;
+    }
+
+    public ResultPaginationDTO getUsers(Specification<User> spec, Pageable pageable) {
+        Page<User> pUser = this.userRepository.findAll(spec, pageable);
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
+
+        mt.setPage(pageable.getPageNumber() + 1);
+        mt.setPageSize(pageable.getPageSize());
+
+        mt.setPages(pUser.getTotalPages());
+        mt.setTotal(pUser.getTotalElements());
+
+        rs.setMeta(mt);
+        rs.setResult(pUser.getContent());
+        return rs;
+    }
+    
+    /**
+     * Lấy danh sách nhà tuyển dụng đang chờ xác minh
+     */
+    public ResultPaginationDTO getPendingEmployers(Specification<User> spec, Pageable pageable) {
+        // Tạo specification để lọc nhà tuyển dụng đang chờ xác minh
+        Specification<User> pendingSpec = (root, query, criteriaBuilder) -> {
+            return criteriaBuilder.and(
+                criteriaBuilder.equal(root.get("role").get("name"), "HR"),
+                criteriaBuilder.equal(root.get("verificationStatus"), VerificationStatus.PENDING)
+            );
+        };
+        
+        // Kết hợp với specification được truyền vào
+        Specification<User> combinedSpec = spec.and(pendingSpec);
+        
+        return getUsers(combinedSpec, pageable);
+    }
+    
+    /**
+     * Cập nhật trạng thái xác minh của nhà tuyển dụng
+     */
+    @Transactional
+    public User updateEmployerVerificationStatus(Long userId, VerificationStatus status) {
+        User user = getUserById(userId);
+        
+        // Kiểm tra xem người dùng có phải là HR không
+        if (user.getRole() == null || !user.getRole().getName().equals("HR")) {
+            throw new RuntimeException("Người dùng không phải là nhà tuyển dụng");
+        }
+        
+        user.setVerificationStatus(status);
+        return userRepository.save(user);
     }
 }

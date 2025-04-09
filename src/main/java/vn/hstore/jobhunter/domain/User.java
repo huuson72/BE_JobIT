@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.Setter;
 import vn.hstore.jobhunter.util.SecurityUtil;
 import vn.hstore.jobhunter.util.constant.GenderEnum;
+import vn.hstore.jobhunter.util.constant.VerificationStatus;
 
 @Entity
 @Table(name = "users")
@@ -78,6 +79,14 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
+    
+    // Thêm trạng thái xác minh
+    @Enumerated(EnumType.STRING)
+    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
+    
+    // Đường dẫn giấy phép kinh doanh
+    private String businessLicense;
+    
     // Thêm quan hệ với CV
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore

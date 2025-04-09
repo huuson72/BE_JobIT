@@ -47,16 +47,20 @@ public class RevenueStatisticsService {
         
         // Tính tỉ lệ tăng trưởng tuần
         Long previousWeekRevenue = transactionRepository.getRevenueByDateRange(twoWeeksAgo, lastWeek);
-        if (previousWeekRevenue != null && previousWeekRevenue > 0) {
+        if (previousWeekRevenue != null && previousWeekRevenue > 0 && lastWeekRevenue != null) {
             double growthRate = ((double) (lastWeekRevenue - previousWeekRevenue) / previousWeekRevenue) * 100;
             statistics.setGrowthRateLastWeek(Math.round(growthRate * 100.0) / 100.0); // Làm tròn 2 chữ số thập phân
+        } else {
+            statistics.setGrowthRateLastWeek(0.0);
         }
         
         // Tính tỉ lệ tăng trưởng tháng
         Long previousMonthRevenue = transactionRepository.getRevenueByDateRange(twoMonthsAgo, lastMonth);
-        if (previousMonthRevenue != null && previousMonthRevenue > 0) {
+        if (previousMonthRevenue != null && previousMonthRevenue > 0 && lastMonthRevenue != null) {
             double growthRate = ((double) (lastMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
             statistics.setGrowthRateLastMonth(Math.round(growthRate * 100.0) / 100.0); // Làm tròn 2 chữ số thập phân
+        } else {
+            statistics.setGrowthRateLastMonth(0.0);
         }
         
         // Doanh thu theo gói đăng ký
@@ -100,10 +104,12 @@ public class RevenueStatisticsService {
         statistics.setSuccessfulTransactions(successfulTransactions);
         statistics.setFailedTransactions(failedTransactions);
         
-        // Tính tỉ lệ thành công
+        // Tính tỉ lệ giao dịch thành công
         if (totalTransactions > 0) {
             double successRate = ((double) successfulTransactions / totalTransactions) * 100;
             statistics.setSuccessRate(Math.round(successRate * 100.0) / 100.0); // Làm tròn 2 chữ số thập phân
+        } else {
+            statistics.setSuccessRate(0.0);
         }
         
         return statistics;
@@ -113,11 +119,50 @@ public class RevenueStatisticsService {
     public RevenueStatisticsDTO getRevenueStatisticsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         RevenueStatisticsDTO statistics = new RevenueStatisticsDTO();
         
-        // Tổng doanh thu trong khoảng thời gian
-        Long revenueInRange = transactionRepository.getRevenueByDateRange(startDate, endDate);
-        statistics.setTotalRevenue(revenueInRange != null ? revenueInRange : 0L);
+        // Doanh thu trong khoảng thời gian
+        Long dateRangeRevenue = transactionRepository.getRevenueByDateRange(startDate, endDate);
+        statistics.setTotalRevenue(dateRangeRevenue != null ? dateRangeRevenue : 0L);
         
-        // TODO: Thêm các thống kê khác theo khoảng thời gian
+        // Doanh thu theo gói đăng ký trong khoảng thời gian
+        List<Map<String, Object>> revenueByPackage = transactionRepository.getRevenueByPackage();
+        statistics.setRevenueByPackage(revenueByPackage);
+        
+        // Doanh thu theo công ty trong khoảng thời gian
+        List<Map<String, Object>> revenueByCompany = transactionRepository.getRevenueByCompany();
+        statistics.setRevenueByCompany(revenueByCompany);
+        
+        // Số lượng giao dịch theo trạng thái trong khoảng thời gian
+        List<Map<String, Object>> transactionCountByStatus = transactionRepository.getTransactionCountByStatus();
+        statistics.setTransactionCountByStatus(transactionCountByStatus);
+        
+        // Tính toán các thông tin tổng quan
+        Long totalTransactions = 0L;
+        Long successfulTransactions = 0L;
+        Long failedTransactions = 0L;
+        
+        for (Map<String, Object> statusCount : transactionCountByStatus) {
+            String status = (String) statusCount.get("status");
+            Long count = ((Number) statusCount.get("count")).longValue();
+            
+            totalTransactions += count;
+            if ("success".equals(status)) {
+                successfulTransactions = count;
+            } else if ("failed".equals(status)) {
+                failedTransactions = count;
+            }
+        }
+        
+        statistics.setTotalTransactions(totalTransactions);
+        statistics.setSuccessfulTransactions(successfulTransactions);
+        statistics.setFailedTransactions(failedTransactions);
+        
+        // Tính tỉ lệ giao dịch thành công
+        if (totalTransactions > 0) {
+            double successRate = ((double) successfulTransactions / totalTransactions) * 100;
+            statistics.setSuccessRate(Math.round(successRate * 100.0) / 100.0); // Làm tròn 2 chữ số thập phân
+        } else {
+            statistics.setSuccessRate(0.0);
+        }
         
         return statistics;
     }

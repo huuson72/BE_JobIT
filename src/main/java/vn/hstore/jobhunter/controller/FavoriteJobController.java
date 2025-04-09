@@ -34,6 +34,12 @@ public class FavoriteJobController {
         return ResponseEntity.ok(job);
     }
 
+    @PostMapping("/{jobId}/toggle")
+    public ResponseEntity<Job> toggleFavoriteJob(@RequestParam Long userId, @PathVariable Long jobId) {
+        Job job = favoriteJobService.toggleFavoriteJob(userId, jobId);
+        return ResponseEntity.ok(job);
+    }
+
     @GetMapping
     public ResponseEntity<List<Job>> getFavoriteJobs(@RequestParam Long userId) {
         return ResponseEntity.ok(favoriteJobService.getFavoriteJobs(userId));

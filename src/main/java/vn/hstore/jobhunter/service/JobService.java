@@ -30,6 +30,7 @@ import vn.hstore.jobhunter.repository.UserRepository;
 import vn.hstore.jobhunter.util.JobSpecification;
 import vn.hstore.jobhunter.util.SecurityUtil;
 import vn.hstore.jobhunter.util.constant.LevelEnum;
+import vn.hstore.jobhunter.util.constant.VerificationStatus;
 import vn.hstore.jobhunter.util.error.QuotaExceededException;
 
 @Service
@@ -80,6 +81,22 @@ public class JobService {
         // Kiểm tra công ty
         if (j.getCompany() == null || j.getCompany().getId() == null) {
             throw new RuntimeException("Thông tin công ty không hợp lệ");
+        }
+
+        // Kiểm tra người dùng có phải là HR của công ty không
+        if (currentUser.getCompany() == null || !currentUser.getCompany().getId().equals(j.getCompany().getId())) {
+            throw new RuntimeException("Bạn không có quyền tạo công việc cho công ty này. Chỉ HR của công ty mới có quyền đăng tin.");
+        }
+
+        // Kiểm tra role HR
+        if (currentUser.getRole() == null || !currentUser.getRole().getName().equals("HR")) {
+            throw new RuntimeException("Bạn không có quyền HR để tạo công việc");
+        }
+
+        // Kiểm tra trạng thái xác minh
+        if (currentUser.getVerificationStatus() == null || 
+            currentUser.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            throw new RuntimeException("Tài khoản của bạn chưa được xác minh. Vui lòng đợi admin phê duyệt.");
         }
 
         // Kiểm tra quota đăng tin

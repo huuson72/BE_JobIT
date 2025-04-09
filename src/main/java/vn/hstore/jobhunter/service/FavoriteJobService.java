@@ -55,6 +55,28 @@ public class FavoriteJobService {
         return job; // ✅ Trả về Job vừa bị xoá khỏi danh sách yêu thích
     }
 
+    @Transactional
+    public Job toggleFavoriteJob(Long userId, Long jobId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
+
+        // Check if the job is already in favorites
+        if (favoriteJobRepository.existsByUserAndJob(user, job)) {
+            // If it exists, remove it
+            favoriteJobRepository.deleteByUserAndJob(user, job);
+            return job;
+        } else {
+            // If it doesn't exist, add it
+            FavouriteJob favoriteJob = new FavouriteJob();
+            favoriteJob.setUser(user);
+            favoriteJob.setJob(job);
+            favoriteJobRepository.save(favoriteJob);
+            return job;
+        }
+    }
+
     public List<Job> getFavoriteJobs(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

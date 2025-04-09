@@ -1,7 +1,6 @@
 package vn.hstore.jobhunter;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -10,13 +9,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 // 		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
 // 		org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration.class
 // })
-@SpringBootApplication
+@Configuration
 @EnableAsync
 @EnableScheduling
 public class JobhunterApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(JobhunterApplication.class, args);
-    }
-
+    // This is now just a configuration class, not a Spring Boot application
 }

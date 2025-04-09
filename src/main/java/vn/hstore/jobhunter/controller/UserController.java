@@ -18,6 +18,7 @@ import com.turkraft.springfilter.boot.Filter;
 
 import jakarta.validation.Valid;
 import vn.hstore.jobhunter.domain.User;
+import vn.hstore.jobhunter.domain.request.ChangePasswordRequest;
 import vn.hstore.jobhunter.domain.request.UpdateUserInfoRequest;
 import vn.hstore.jobhunter.domain.response.ResCreateUserDTO;
 import vn.hstore.jobhunter.domain.response.ResUpdateUserDTO;
@@ -102,15 +103,15 @@ public class UserController {
         return ResponseEntity.ok(this.userService.convertToResUpdateUserDTO(ericUser));
     }
 
-    @PutMapping("/users/{id}/info")
+    @PutMapping("/users/profile")
     @ApiMessage("Cập nhật thông tin người dùng")
     public ResponseEntity<ResUserDTO> updateUserInfo(
-            @PathVariable("id") long id,
             @Valid @RequestBody UpdateUserInfoRequest request) throws IdInvalidException {
         
-        User currentUser = this.userService.fetchUserById(id);
+        // Get current authenticated user
+        User currentUser = this.userService.getCurrentUser();
         if (currentUser == null) {
-            throw new IdInvalidException("User với id = " + id + " không tồn tại");
+            throw new IdInvalidException("Không tìm thấy thông tin người dùng đang đăng nhập");
         }
 
         // Check if new email already exists for another user
@@ -133,6 +134,35 @@ public class UserController {
         if (request.getAddress() != null) {
             currentUser.setAddress(request.getAddress());
         }
+
+        User updatedUser = this.userService.handleUpdateUser(currentUser);
+        return ResponseEntity.ok(this.userService.convertToResUserDTO(updatedUser));
+    }
+
+    @PutMapping("/users/change-password")
+    @ApiMessage("Thay đổi mật khẩu người dùng")
+    public ResponseEntity<ResUserDTO> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) throws IdInvalidException {
+        
+        // Get current authenticated user
+        User currentUser = this.userService.getCurrentUser();
+        if (currentUser == null) {
+            throw new IdInvalidException("Không tìm thấy thông tin người dùng đang đăng nhập");
+        }
+
+        // Verify current password
+        if (!this.passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
+            throw new IdInvalidException("Mật khẩu hiện tại không chính xác");
+        }
+
+        // Validate that new password and confirm password match
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new IdInvalidException("Mật khẩu mới và xác nhận mật khẩu không khớp");
+        }
+
+        // Update password
+        String hashPassword = this.passwordEncoder.encode(request.getNewPassword());
+        currentUser.setPassword(hashPassword);
 
         User updatedUser = this.userService.handleUpdateUser(currentUser);
         return ResponseEntity.ok(this.userService.convertToResUserDTO(updatedUser));

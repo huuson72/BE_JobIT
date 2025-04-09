@@ -12,6 +12,10 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_17
 }
 
+springBoot {
+	mainClass.set("vn.hstore.JobitApplication")
+}
+
 repositories {
 	mavenCentral()
 }
@@ -26,6 +30,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	implementation("de.codecentric:spring-boot-admin-starter-server:3.2.1")
+	implementation("de.codecentric:spring-boot-admin-starter-client:3.2.1")
 	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 	implementation("com.turkraft.springfilter:jpa:3.1.7")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")

@@ -40,4 +40,7 @@ public class EmployerRegisterDTO {
     private String companyDescription;
     
     private String companyLogo;
+    
+    // Thêm trường giấy phép kinh doanh
+    private String businessLicense;
 } 

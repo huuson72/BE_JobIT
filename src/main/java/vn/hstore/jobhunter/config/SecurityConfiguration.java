@@ -77,6 +77,8 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/v1/promotions/package/{packageId}").permitAll()
                 // APIs cần xác thực người dùng
                 .requestMatchers(HttpMethod.PUT, "/api/v1/users/{id}/info").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/users/profile").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/users/change-password").authenticated()
                 .requestMatchers("/api/v1/cvs/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/gencv/create").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/gencv/preview/**").authenticated()
