@@ -12,6 +12,7 @@ import vn.hstore.jobhunter.repository.UserRepository;
 import vn.hstore.jobhunter.repository.CompanyRepository;
 import vn.hstore.jobhunter.repository.SubscriptionPackageRepository;
 import vn.hstore.jobhunter.repository.SubscriptionRepository;
+import vn.hstore.jobhunter.util.constant.VerificationStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.net.URLEncoder;
@@ -42,6 +43,28 @@ public class VNPayService {
     private SubscriptionRepository subscriptionRepository;
 
     public String createPaymentUrl(PaymentRequestDTO paymentRequest) {
+        // Kiểm tra user tồn tại
+        User user = userRepository.findById(paymentRequest.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Kiểm tra trạng thái xác minh (bỏ qua nếu là admin)
+        if (user.getVerificationStatus() == null || user.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            // Kiểm tra nếu là admin thì cho phép
+            if (user.getRole() == null || 
+                (!user.getRole().getName().equals("SUPER_ADMIN") && 
+                 !user.getRole().getName().equals("ADMIN"))) {
+                throw new RuntimeException("Account not verified. Please wait for admin approval.");
+            }
+        }
+
+        // Kiểm tra công ty tồn tại
+        Company company = companyRepository.findById(paymentRequest.getCompanyId())
+                .orElseThrow(() -> new RuntimeException("Company not found"));
+
+        // Kiểm tra gói VIP tồn tại
+        SubscriptionPackage subscriptionPackage = subscriptionPackageRepository.findById(paymentRequest.getPackageId())
+                .orElseThrow(() -> new RuntimeException("Subscription package not found"));
+
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String vnp_TxnRef = generateTxnRef();
@@ -59,19 +82,9 @@ public class VNPayService {
         transaction.setStatus("PENDING");
         transaction.setCreatedAt(LocalDateTime.now());
         transaction.setUpdatedAt(LocalDateTime.now());
-
-        User user = userRepository.findById(paymentRequest.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
         transaction.setUser(user);
-
-        Company company = companyRepository.findById(paymentRequest.getCompanyId())
-                .orElseThrow(() -> new RuntimeException("Company not found"));
         transaction.setCompany(company);
-
-        SubscriptionPackage subscriptionPackage = subscriptionPackageRepository.findById(paymentRequest.getPackageId())
-                .orElseThrow(() -> new RuntimeException("Subscription package not found"));
         transaction.setSubscriptionPackage(subscriptionPackage);
-
         transactionRepository.save(transaction);
 
         Map<String, String> vnp_Params = new HashMap<>();

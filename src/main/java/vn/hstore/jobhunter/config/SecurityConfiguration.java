@@ -54,7 +54,8 @@ public class SecurityConfiguration {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            "/api/v1/payments/vnpay-callback"
+            "/api/v1/payments/vnpay-callback",
+            "/api/v1/employers/verification-status"
         };
 
         http
@@ -83,7 +84,6 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/api/v1/gencv/create").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/gencv/preview/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/gencv/download/**").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/v1/employer/subscribe").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/employer/{userId}/subscriptions").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/v1/employer/{userId}/company/{companyId}/status").authenticated()
                 .requestMatchers("/api/favorites/**").authenticated()

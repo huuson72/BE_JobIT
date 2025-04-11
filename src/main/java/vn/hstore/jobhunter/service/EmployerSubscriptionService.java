@@ -24,6 +24,7 @@ import vn.hstore.jobhunter.repository.JobPostingUsageRepository;
 import vn.hstore.jobhunter.repository.SubscriptionPackageRepository;
 import vn.hstore.jobhunter.repository.UserRepository;
 import vn.hstore.jobhunter.service.PromotionService.DiscountResult;
+import vn.hstore.jobhunter.util.constant.VerificationStatus;
 
 @Service
 public class EmployerSubscriptionService {
@@ -56,6 +57,15 @@ public class EmployerSubscriptionService {
         // Kiểm tra user tồn tại
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+
+        // Kiểm tra trạng thái xác minh (bỏ qua nếu là admin)
+        if ((user.getVerificationStatus() == null || 
+            user.getVerificationStatus() != VerificationStatus.VERIFIED) && 
+            (user.getRole() == null || 
+             (!user.getRole().getName().equals("SUPER_ADMIN") && 
+              !user.getRole().getName().equals("ADMIN")))) {
+            throw new RuntimeException("Tài khoản của bạn chưa được xác minh. Vui lòng đợi admin phê duyệt.");
+        }
 
         // Kiểm tra công ty tồn tại
         Company company = companyRepository.findById(companyId)

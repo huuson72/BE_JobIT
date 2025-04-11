@@ -64,6 +64,11 @@ public class UserService {
         if (user.getRole() != null) {
             Role r = this.roleService.fetchById(user.getRole().getId());
             user.setRole(r);
+            
+            // Nếu người dùng là admin, tự động xác minh
+            if (r.getName().equals("ADMIN") || r.getName().equals("SUPER_ADMIN")) {
+                user.setVerificationStatus(VerificationStatus.VERIFIED);
+            }
         } else {
             // Gán role có ID = 3 nếu user không có role
             Role defaultRole = this.roleService.fetchById(3);
@@ -302,7 +307,13 @@ public class UserService {
             throw new RuntimeException("Người dùng không phải là nhà tuyển dụng");
         }
         
-        user.setVerificationStatus(status);
+        // Nếu người dùng là admin, tự động xác minh
+        if (user.getRole().getName().equals("ADMIN") || user.getRole().getName().equals("SUPER_ADMIN")) {
+            user.setVerificationStatus(VerificationStatus.VERIFIED);
+        } else {
+            user.setVerificationStatus(status);
+        }
+        
         return userRepository.save(user);
     }
 }
