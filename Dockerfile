@@ -9,5 +9,16 @@ RUN gradle clean build -x test --no-daemon
 # Stage 2: Run the application
 FROM openjdk:17-slim
 EXPOSE 8080
-COPY --from=build /hstore/jobhunter/build/libs/*.jar /hstore/spring-boot-job-hunter.jar
-ENTRYPOINT ["java", "-jar", "/hstore/spring-boot-job-hunter.jar"]
+
+# Create directory for uploads and set permissions
+RUN mkdir -p /app/upload && \
+    chmod 777 /app/upload
+
+# Copy the jar file
+COPY --from=build /hstore/jobhunter/build/libs/*.jar /app/app.jar
+
+# Set working directory
+WORKDIR /app
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]

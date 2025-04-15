@@ -40,7 +40,7 @@ dependencies {
     implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
 
     // Thư viện hỗ trợ xử lý JSON (cho dữ liệu người dùng nhập)
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

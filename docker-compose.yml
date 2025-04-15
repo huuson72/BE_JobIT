@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: jobhunter-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 070203
+      MYSQL_DATABASE: jobhunter
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../backup.sql:/docker-entrypoint-initdb.d/backup.sql
+    networks:
+      - jobhunter-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: 
+      context: ./Backup_JobIT_BE
+      dockerfile: Dockerfile
+    container_name: jobhunter-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/jobhunter?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 070203
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      HSTORE_UPLOAD_FILE_BASE_URI: file:///app/upload/
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Backup_JobIT_BE/upload:/app/upload
+    networks:
+      - jobhunter-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  jobhunter-network:
+    driver: bridge 
