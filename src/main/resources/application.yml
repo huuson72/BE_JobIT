@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: jobhunter
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://root:ERHDPYndXRzKLdqwVomulSywiyqYiNPz@ballast.proxy.rlwy.net:53847/railway}
     username: ${MYSQL_USERNAME:root}
@@ -12,6 +14,33 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+  # Multipart configuration
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  # Email configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:huuson0702@gmail.com}
+    password: ${MAIL_PASSWORD:bhoyddwrfyetpsig}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  # Pagination configuration
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+  # Security configuration
+  security:
+    user:
+      name: ${SECURITY_USER:admin}
+      password: ${SECURITY_PASSWORD:admin}
 
 server:
   port: ${PORT:8080}
@@ -23,4 +52,36 @@ management:
         include: "*"
   endpoint:
     health:
-      show-details: always 
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        ready:
+          include: db,diskSpace
+        live:
+          include: ping
+
+# JWT Configuration
+hstore:
+  jwt:
+    base64-secret: ${JWT_SECRET:TRrx3ZoD9xgevlM73MU8/ay9VO+8RJ7NjvFh5Ab0xoTsKzuPYwCOKDZugGYsVxroYRfP94DH6jBxBhFyBPaQQQ==}
+    access-token-validity-in-seconds: 8640000
+    refresh-token-validity-in-seconds: 8640000
+  upload-file:
+    base-uri: ${UPLOAD_BASE_URI:file:///app/upload/}
+
+# VNPay Configuration
+vnpay:
+  tmnCode: ${VNPAY_TMN_CODE:G8FDX4CA}
+  hashSecret: ${VNPAY_HASH_SECRET:88URW9FI49JH90W5XXMF9BY9YHX63P65}
+  url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  returnUrl: ${VNPAY_RETURN_URL:https://jobit-be.onrender.com/api/v1/payments/vnpay-callback}
+
+# Logging Configuration
+logging:
+  level:
+    org:
+      springframework:
+        web: DEBUG
+        http: DEBUG
+ 
