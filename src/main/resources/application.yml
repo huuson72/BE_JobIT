@@ -74,14 +74,14 @@ hstore:
     access-token-validity-in-seconds: 8640000
     refresh-token-validity-in-seconds: 8640000
   upload-file:
-    base-uri: ${UPLOAD_BASE_URI:file:///app/upload/}
+    base-uri: ${UPLOAD_BASE_URI:file:///tmp/jobhunter/upload/}
 
 # VNPay Configuration
 vnpay:
   tmnCode: ${VNPAY_TMN_CODE:G8FDX4CA}
   hashSecret: ${VNPAY_HASH_SECRET:88URW9FI49JH90W5XXMF9BY9YHX63P65}
   url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
-  returnUrl: ${VNPAY_RETURN_URL:https://jobit-be.onrender.com/api/v1/payments/vnpay-callback}
+  returnUrl: ${VNPAY_RETURN_URL:https://be-jobit.onrender.com/api/v1/payments/vnpay-callback}
 
 # Logging Configuration
 logging:

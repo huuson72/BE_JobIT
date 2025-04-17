@@ -77,18 +77,36 @@ public class PaymentController {
             @RequestParam Map<String, String> queryParams
     ) throws IOException {
         try {
-            boolean isValid = vnPayService.validateResponse(queryParams);
-            if (isValid) {
-                vnPayService.handlePaymentCallback(queryParams);
-            }
-
             // Log tất cả các tham số để debug
-            System.out.println("VNPay Callback Parameters:");
+            System.out.println("===== VNPay Callback Parameters: =====");
             for (Map.Entry<String, String> entry : queryParams.entrySet()) {
                 System.out.println(entry.getKey() + ": " + entry.getValue());
             }
+            
+            boolean isValid = vnPayService.validateResponse(queryParams);
+            System.out.println("Signature validation result: " + (isValid ? "VALID" : "INVALID"));
+            
+            if (isValid) {
+                vnPayService.handlePaymentCallback(queryParams);
+                System.out.println("Payment callback processed successfully");
+            } else {
+                System.err.println("Invalid VNPay signature!");
+            }
 
-            String frontendUrl = "http://localhost:3000/subscription/payment-result";
+            // Xác định URL của frontend dựa trên môi trường
+            String frontendUrl;
+            String referer = request.getHeader("Referer");
+            System.out.println("Referer: " + referer);
+            
+            // Nếu request đến từ localhost, sử dụng URL local
+            if (referer != null && referer.contains("localhost")) {
+                frontendUrl = "http://localhost:3000/subscription/payment-result";
+            } else {
+                // Sử dụng URL production
+                frontendUrl = "https://fe-jobit.onrender.com/subscription/payment-result";
+            }
+            System.out.println("Using frontend URL: " + frontendUrl);
+            
             StringBuilder redirectUrl = new StringBuilder(frontendUrl);
             redirectUrl.append("?");
 
@@ -106,7 +124,13 @@ public class PaymentController {
             // Chuyển hướng
             response.sendRedirect(redirectUrl.toString());
         } catch (Exception e) {
-            // Xử lý lỗi...
+            System.err.println("Error in VNPay callback: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Redirect về frontend với thông báo lỗi
+            String errorUrl = "https://fe-jobit.onrender.com/subscription/payment-result?vnp_ResponseCode=99&error=" 
+                + URLEncoder.encode("Lỗi xử lý thanh toán: " + e.getMessage(), StandardCharsets.UTF_8);
+            response.sendRedirect(errorUrl);
         }
     }
 

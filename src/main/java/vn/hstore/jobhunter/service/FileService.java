@@ -24,54 +24,84 @@ public class FileService {
     private String baseURI;
 
     public void createDirectory(String folder) throws URISyntaxException {
-        URI uri = new URI(folder);
-        Path path = Paths.get(uri);
-        File tmpDir = new File(path.toString());
-        if (!tmpDir.isDirectory()) {
-            try {
-                Files.createDirectory(tmpDir.toPath());
-                System.out.println(">>> CREATE NEW DIRECTORY SUCCESSFUL, PATH = " + tmpDir.toPath());
-            } catch (IOException e) {
-                e.printStackTrace();
+        try {
+            // Xử lý URI
+            String folderPath = baseURI.replace("file:///", "/") + folder;
+            File directory = new File(folderPath);
+            
+            if (!directory.exists()) {
+                boolean created = directory.mkdirs();
+                if (created) {
+                    System.out.println(">>> CREATE NEW DIRECTORY SUCCESSFUL, PATH = " + directory.getAbsolutePath());
+                } else {
+                    System.err.println(">>> FAILED TO CREATE DIRECTORY: " + directory.getAbsolutePath());
+                }
+            } else {
+                System.out.println(">>> SKIP MAKING DIRECTORY, ALREADY EXISTS: " + directory.getAbsolutePath());
             }
-        } else {
-            System.out.println(">>> SKIP MAKING DIRECTORY, ALREADY EXISTS");
+        } catch (Exception e) {
+            System.err.println(">>> ERROR CREATING DIRECTORY: " + e.getMessage());
+            e.printStackTrace();
         }
-
     }
 
     public String store(MultipartFile file, String folder) throws URISyntaxException, IOException {
-        // create unique filename
+        // Đảm bảo thư mục tồn tại
+        createDirectory(folder);
+        
+        // Tạo tên file duy nhất
         String finalName = System.currentTimeMillis() + "-" + file.getOriginalFilename();
 
-        URI uri = new URI(baseURI + folder + "/" + finalName);
-        Path path = Paths.get(uri);
-        try (InputStream inputStream = file.getInputStream()) {
-            Files.copy(inputStream, path,
-                    StandardCopyOption.REPLACE_EXISTING);
+        // Kiểm tra folder có dấu / ở cuối không
+        if (!folder.endsWith("/")) {
+            folder = folder + "/";
         }
+
+        // Tạo đường dẫn tuyệt đối đến file
+        String filePath = baseURI.replace("file:///", "/") + folder + finalName;
+        File destFile = new File(filePath);
+        
+        // Đảm bảo thư mục cha tồn tại
+        if (!destFile.getParentFile().exists()) {
+            destFile.getParentFile().mkdirs();
+        }
+        
+        try (InputStream inputStream = file.getInputStream()) {
+            Files.copy(inputStream, destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            System.out.println(">>> FILE STORED SUCCESSFULLY AT: " + destFile.getAbsolutePath());
+        }
+        
         return finalName;
     }
 
     public long getFileLength(String fileName, String folder) throws URISyntaxException {
-        URI uri = new URI(baseURI + folder + "/" + fileName);
-        Path path = Paths.get(uri);
+        if (!folder.endsWith("/")) {
+            folder = folder + "/";
+        }
+        
+        String filePath = baseURI.replace("file:///", "/") + folder + fileName;
+        File file = new File(filePath);
 
-        File tmpDir = new File(path.toString());
-
-        // file không tồn tại, hoặc file là 1 director => return 0
-        if (!tmpDir.exists() || tmpDir.isDirectory()) {
+        // file không tồn tại, hoặc file là 1 directory => return 0
+        if (!file.exists() || file.isDirectory()) {
             return 0;
         }
-        return tmpDir.length();
+        return file.length();
     }
 
     public InputStreamResource getResource(String fileName, String folder)
             throws URISyntaxException, FileNotFoundException {
-        URI uri = new URI(baseURI + folder + "/" + fileName);
-        Path path = Paths.get(uri);
-
-        File file = new File(path.toString());
+        if (!folder.endsWith("/")) {
+            folder = folder + "/";
+        }
+        
+        String filePath = baseURI.replace("file:///", "/") + folder + fileName;
+        File file = new File(filePath);
+        
+        if (!file.exists()) {
+            throw new FileNotFoundException("File not found: " + filePath);
+        }
+        
         return new InputStreamResource(new FileInputStream(file));
     }
 }
