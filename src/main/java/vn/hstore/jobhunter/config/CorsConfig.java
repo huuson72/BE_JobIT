@@ -16,7 +16,13 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         // cho phép các URL nào có thể kết nối tới backend
         configuration.setAllowedOrigins(
-                Arrays.asList("http://localhost:3000", "http://localhost:4173", "http://localhost:5173"));
+                Arrays.asList(
+                    "http://localhost:3000", 
+                    "http://localhost:4173", 
+                    "http://localhost:5173",
+                    "https://jobit-fe.onrender.com",
+                    "https://jobit-fe.onrender.com/"
+                ));
 
         // các method nào đc kết nối
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
