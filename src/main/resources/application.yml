@@ -44,6 +44,12 @@ spring:
 
 server:
   port: ${PORT:8080}
+  error:
+    whitelabel:
+      enabled: false
+  servlet:
+    context-path: /
+  forward-headers-strategy: FRAMEWORK
 
 management:
   endpoints:

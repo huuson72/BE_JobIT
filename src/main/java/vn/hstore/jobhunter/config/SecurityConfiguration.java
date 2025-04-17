@@ -45,6 +45,7 @@ public class SecurityConfiguration {
 
         String[] whiteList = {
             "/",
+            "/**", // Cho phép tất cả requests đến root path
             "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register", "/api/v1/auth/register-employer", "/api/v1/auth/employer-register",
             "/api/status",
             "/storage/**",
@@ -62,11 +63,18 @@ public class SecurityConfiguration {
                 .csrf(c -> c.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authz -> authz
+                // Cho phép tất cả OPTIONS request trước
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Whitelist - luôn cho phép
                 .requestMatchers(whiteList).permitAll()
+                // Cho phép tất cả GET request
+                .requestMatchers(HttpMethod.GET, "/**").permitAll()
+                // Tất cả các request POST, PUT, DELETE đến các API cụ thể
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                 // Public APIs - không cần xác thực
                 .requestMatchers(HttpMethod.GET, "/api/v1/packages").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/packages/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/companies").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/companies/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/jobs/**").permitAll()
@@ -76,6 +84,7 @@ public class SecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/api/v1/promotions/calculate-discount/{packageId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/promotions/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/promotions/package/{packageId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll() // Cho phép tất cả GET requests đến /api/v1/
                 // APIs cần xác thực người dùng
                 .requestMatchers(HttpMethod.PUT, "/api/v1/users/{id}/info").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/v1/users/profile").authenticated()

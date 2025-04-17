@@ -19,4 +19,6 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/api/uploads/**")
                 .addResourceLocations(uploadDir);
     }
+    
+    // CORS configuration đã được di chuyển vào CorsConfig
 } 
