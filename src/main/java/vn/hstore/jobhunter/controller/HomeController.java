@@ -26,4 +26,4 @@ public class HomeController {
         response.put("status", "UP");
         return ResponseEntity.ok(response);
     }
-} 
+}
