@@ -100,13 +100,24 @@ public class VNPayService {
         vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        // Đặt múi giờ rõ ràng là GMT+7 (Việt Nam)
+        TimeZone vnTimeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
+        Calendar cld = Calendar.getInstance(vnTimeZone);
+        
+        // Lấy thời gian hiện tại theo múi giờ GMT+7
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(vnTimeZone);
+        
+        // In ra log để debug
+        System.out.println("Current VN time: " + formatter.format(cld.getTime()));
+        
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
-
-        cld.add(Calendar.MINUTE, 15);
+        
+        // Tăng thời gian hết hạn lên 180 phút (3 giờ)
+        cld.add(Calendar.MINUTE, 180);
         String vnp_ExpireDate = formatter.format(cld.getTime());
+        System.out.println("Expire VN time: " + vnp_ExpireDate);
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
         List fieldNames = new ArrayList(vnp_Params.keySet());
@@ -175,7 +186,8 @@ public class VNPayService {
     }
 
     private String generateTxnRef() {
-        return String.valueOf(System.currentTimeMillis());
+        // Kết hợp timestamp với UUID để đảm bảo mã giao dịch luôn duy nhất
+        return System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
     private String hmacSHA512(String key, String data) {

@@ -78,10 +78,11 @@ hstore:
 
 # VNPay Configuration
 vnpay:
-  tmnCode: ${VNPAY_TMN_CODE:G8FDX4CA}
-  hashSecret: ${VNPAY_HASH_SECRET:88URW9FI49JH90W5XXMF9BY9YHX63P65}
+  tmnCode: ${VNPAY_TMN_CODE:E2QSB8AK}
+  hashSecret: ${VNPAY_HASH_SECRET:SS224F9FFPWMD1DHGMR6B0QKKVLJK4UE}
   url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
   returnUrl: ${VNPAY_RETURN_URL:https://be-jobit.onrender.com/api/v1/payments/vnpay-callback}
+  timeZone: ${VNPAY_TIMEZONE:Asia/Ho_Chi_Minh}
 
 # Logging Configuration
 logging:
