@@ -23,7 +23,8 @@ public class CorsConfig implements WebMvcConfigurer {
         "http://localhost:5173",
         "https://fe-jobit.onrender.com", 
         "https://jobit-fe.onrender.com",
-        "https://be-jobit.onrender.com"
+        "https://be-jobit.onrender.com",
+        "https://hsjobit.onrender.com"
     };
     
     private static final String[] ALLOWED_METHODS = {
