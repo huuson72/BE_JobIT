@@ -27,6 +27,7 @@ import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hstore.jobhunter.service.UserService;
 import vn.hstore.jobhunter.util.annotation.ApiMessage;
 import vn.hstore.jobhunter.util.error.IdInvalidException;
+import vn.hstore.jobhunter.domain.response.RestResponse;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -95,12 +96,21 @@ public class UserController {
 
     @PutMapping("/users")
     @ApiMessage("Update a user")
-    public ResponseEntity<ResUpdateUserDTO> updateUser(@RequestBody User user) throws IdInvalidException {
-        User ericUser = this.userService.handleUpdateUser(user);
-        if (ericUser == null) {
-            throw new IdInvalidException("User với id = " + user.getId() + " không tồn tại");
+    public ResponseEntity<?> updateUser(@RequestBody User user) throws IdInvalidException {
+        try {
+            User ericUser = this.userService.handleUpdateUser(user);
+            if (ericUser == null) {
+                throw new IdInvalidException("User với id = " + user.getId() + " không tồn tại");
+            }
+            return ResponseEntity.ok(this.userService.convertToResUpdateUserDTO(ericUser));
+        } catch (IllegalArgumentException e) {
+            RestResponse<Object> errorResponse = new RestResponse<>();
+            errorResponse.setStatusCode(400);
+            errorResponse.setError("Bad Request");
+            errorResponse.setMessage(e.getMessage());
+            errorResponse.setData(null);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
-        return ResponseEntity.ok(this.userService.convertToResUpdateUserDTO(ericUser));
     }
 
     @PutMapping("/users/profile")

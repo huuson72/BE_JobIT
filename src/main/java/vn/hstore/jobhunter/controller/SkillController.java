@@ -58,6 +58,16 @@ public class SkillController {
         return ResponseEntity.ok().body(this.skillService.updateSkill(currentSkill));
     }
 
+    @GetMapping("/skills/{id}")
+    @ApiMessage("Get a skill by id")
+    public ResponseEntity<Skill> getSkill(@PathVariable("id") long id) throws IdInvalidException {
+        Skill skill = this.skillService.fetchSkillById(id);
+        if (skill == null) {
+            throw new IdInvalidException("Skill id = " + id + " không tồn tại");
+        }
+        return ResponseEntity.ok().body(skill);
+    }
+
     @DeleteMapping("/skills/{id}")
     @ApiMessage("Delete a skill")
     public ResponseEntity<Void> delete(@PathVariable("id") long id) throws IdInvalidException {

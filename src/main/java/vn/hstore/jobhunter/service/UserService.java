@@ -138,10 +138,19 @@ public class UserService {
     public User handleUpdateUser(User reqUser) {
         User currentUser = this.fetchUserById(reqUser.getId());
         if (currentUser != null) {
+            // Kiểm tra email trùng lặp nếu email mới khác email hiện tại
+            if (reqUser.getEmail() != null && !reqUser.getEmail().equals(currentUser.getEmail())) {
+                boolean isEmailExist = this.isEmailExist(reqUser.getEmail());
+                if (isEmailExist) {
+                    throw new IllegalArgumentException("Email " + reqUser.getEmail() + " đã tồn tại, vui lòng sử dụng email khác.");
+                }
+            }
+            
             currentUser.setAddress(reqUser.getAddress());
             currentUser.setGender(reqUser.getGender());
             currentUser.setAge(reqUser.getAge());
             currentUser.setName(reqUser.getName());
+            currentUser.setEmail(reqUser.getEmail());
 
             // Check công ty (tránh lỗi NullPointerException)
             if (reqUser.getCompany() != null && reqUser.getCompany().getId() != null) {

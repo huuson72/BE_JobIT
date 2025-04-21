@@ -21,4 +21,10 @@ public class VNPayConfig {
     
     @Value("${vnpay.returnUrl}")
     private String returnUrl;
+    
+    @Value("${vnpay.frontendUrl}")
+    private String frontendUrl;
+    
+    @Value("${vnpay.timeZone}")
+    private String timeZone;
 } 

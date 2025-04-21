@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import vn.hstore.jobhunter.config.VNPayConfig;
 import vn.hstore.jobhunter.domain.Subscription;
 import vn.hstore.jobhunter.domain.Transaction;
 import vn.hstore.jobhunter.dto.PaymentRequestDTO;
@@ -38,6 +39,9 @@ public class PaymentController {
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
+    
+    @Autowired
+    private VNPayConfig vnPayConfig;
 
     @PostMapping("/create")
     public ResponseEntity<?> createPayment(@RequestBody PaymentRequestDTO paymentRequest) {
@@ -49,27 +53,6 @@ public class PaymentController {
         }
     }
 
-    // @GetMapping("/vnpay-callback")
-    // public ResponseEntity<?> vnPayCallback(@RequestParam Map<String, String> queryParams) {
-    //     try {
-    //         boolean isValid = vnPayService.validateResponse(queryParams);
-    //         if (isValid) {
-    //             vnPayService.handlePaymentCallback(queryParams);
-    //             String responseCode = queryParams.get("vnp_ResponseCode");
-    //             if ("00".equals(responseCode)) {
-    //                 // Payment successful
-    //                 return ResponseEntity.ok().body("Payment successful");
-    //             } else {
-    //                 // Payment failed
-    //                 return ResponseEntity.badRequest().body("Payment failed");
-    //             }
-    //         } else {
-    //             return ResponseEntity.badRequest().body("Invalid signature");
-    //         }
-    //     } catch (Exception e) {
-    //         return ResponseEntity.badRequest().body("Error processing callback: " + e.getMessage());
-    //     }
-    // }
     @GetMapping("/vnpay-callback")
     public void vnPayCallback(
             HttpServletRequest request,
@@ -93,21 +76,12 @@ public class PaymentController {
                 System.err.println("Invalid VNPay signature!");
             }
 
-            // Xác định URL của frontend dựa trên môi trường
-            String frontendUrl;
-            String referer = request.getHeader("Referer");
-            System.out.println("Referer: " + referer);
-            
-            // Nếu request đến từ localhost, sử dụng URL local
-            if (referer != null && referer.contains("localhost")) {
-                frontendUrl = "http://localhost:3000/subscription/payment-result";
-            } else {
-                // Sử dụng URL production
-                frontendUrl = "https://fe-jobit.onrender.com/subscription/payment-result";
-            }
+            // Sử dụng frontendUrl từ cấu hình
+            String frontendUrl = vnPayConfig.getFrontendUrl();
             System.out.println("Using frontend URL: " + frontendUrl);
             
             StringBuilder redirectUrl = new StringBuilder(frontendUrl);
+            redirectUrl.append("/subscription/payment-result");
             redirectUrl.append("?");
 
             // Đảm bảo chuyển tất cả tham số sang frontend
@@ -128,7 +102,7 @@ public class PaymentController {
             e.printStackTrace();
             
             // Redirect về frontend với thông báo lỗi
-            String errorUrl = "https://fe-jobit.onrender.com/subscription/payment-result?vnp_ResponseCode=99&error=" 
+            String errorUrl = vnPayConfig.getFrontendUrl() + "/subscription/payment-result?vnp_ResponseCode=99&error=" 
                 + URLEncoder.encode("Lỗi xử lý thanh toán: " + e.getMessage(), StandardCharsets.UTF_8);
             response.sendRedirect(errorUrl);
         }
