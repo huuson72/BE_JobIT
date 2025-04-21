@@ -49,7 +49,7 @@ vnpay:
   hash-secret: ${VNPAY_HASH_SECRET}
   url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
   returnUrl: ${VNPAY_RETURN_URL:https://be-jobit.onrender.com/api/v1/payments/vnpay-callback}
-  frontendUrl: ${FRONTEND_URL:https://fe-jobit.onrender.com}
+  frontendUrl: ${FRONTEND_URL:https://hsjobit.onrender.com}
 
 logging:
   level:
