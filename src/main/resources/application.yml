@@ -2,7 +2,7 @@ spring:
   application:
     name: jobhunter
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://root:ERHDPYndXRzKLdqwVomulSywiyqYiNPz@ballast.proxy.rlwy.net:53847/railway}
+    url: ${MYSQL_URL:jdbc:mysql://root:oICSHMwAXuPzWKtehWuIOdvEYplxwAcB@shuttle.proxy.rlwy.net:41908/railway}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&autoReconnect=true
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD:ERHDPYndXRzKLdqwVomulSywiyqYiNPz}
     driver-class-name: com.mysql.cj.jdbc.Driver

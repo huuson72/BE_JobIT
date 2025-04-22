@@ -2,7 +2,7 @@ spring:
   application:
     name: jobhunter
   datasource:
-    url: ${RAILWAY_MYSQL_URL}
+    url: ${RAILWAY_MYSQL_URL}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&autoReconnect=true
     username: ${RAILWAY_MYSQL_USERNAME}
     password: ${RAILWAY_MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -12,6 +12,7 @@ spring:
       minimum-idle: 2
       idle-timeout: 300000
       max-lifetime: 1200000
+      connection-test-query: SELECT 1
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,6 +21,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+        connection:
+          provider_class: org.hibernate.hikaricp.internal.HikariCPConnectionProvider
   servlet:
     multipart:
       max-file-size: 10MB
