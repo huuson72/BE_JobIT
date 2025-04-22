@@ -144,8 +144,9 @@ public class DatabaseInitializer implements CommandLineRunner {
                     .filter(p -> p.getModule().equals("JOBS") || 
                                  p.getModule().equals("COMPANIES") || 
                                  p.getModule().equals("EMPLOYER_SUBSCRIPTION") ||
-                                 p.getModule().equals("PAYMENTS") ||  // Thêm quyền thanh toán
-                                 p.getModule().equals("PROMOTIONS"))  // Thêm quyền xem ưu đãi
+                                 p.getModule().equals("PAYMENTS") ||  
+                                 p.getModule().equals("PROMOTIONS") ||
+                                 p.getModule().equals("RESUMES"))  // Thêm quyền quản lý CV
                     .collect(Collectors.toList());
             hrRole.setPermissions(hrPermissions);
             this.roleRepository.save(hrRole);

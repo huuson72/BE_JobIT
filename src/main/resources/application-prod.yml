@@ -6,13 +6,20 @@ spring:
     username: ${RAILWAY_MYSQL_USERNAME}
     password: ${RAILWAY_MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
   servlet:
     multipart:
       max-file-size: 10MB
@@ -38,7 +45,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,db
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    db:
+      enabled: true
 
 jwt:
   base64-secret: ${JWT_SECRET}
@@ -55,4 +69,12 @@ vnpay:
 logging:
   level:
     root: INFO
-    com.jobhunter: INFO 
+    com.jobhunter: INFO
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.jdbc.core: TRACE
+    com.zaxxer.hikari: DEBUG
+    org.springframework.boot.autoconfigure: DEBUG
+    org.springframework.boot.actuate: DEBUG 
