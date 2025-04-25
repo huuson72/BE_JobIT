@@ -68,6 +68,8 @@ vnpay:
   url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
   returnUrl: ${VNPAY_RETURN_URL:https://be-jobit.onrender.com/api/v1/payments/vnpay-callback}
   frontendUrl: ${FRONTEND_URL:https://hsjobit.onrender.com}
+  timeZone: ${VNPAY_TIMEZONE:Asia/Ho_Chi_Minh}
+  expireTime: 15
 
 logging:
   level:

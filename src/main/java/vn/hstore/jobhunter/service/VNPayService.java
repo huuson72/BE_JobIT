@@ -114,8 +114,8 @@ public class VNPayService {
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
         
-        // Tăng thời gian hết hạn lên 180 phút (3 giờ)
-        cld.add(Calendar.MINUTE, 180);
+        // Tăng thời gian hết hạn lên 15 phút
+        cld.add(Calendar.MINUTE, 15);
         String vnp_ExpireDate = formatter.format(cld.getTime());
         System.out.println("Expire VN time: " + vnp_ExpireDate);
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);

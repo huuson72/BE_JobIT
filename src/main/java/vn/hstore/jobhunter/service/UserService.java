@@ -242,6 +242,7 @@ public class UserService {
         res.setCreatedAt(user.getCreatedAt());
         res.setGender(user.getGender());
         res.setAddress(user.getAddress());
+        res.setPhone(user.getPhone());
         return res;
     }
 

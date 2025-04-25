@@ -83,20 +83,24 @@ public class JobService {
             throw new RuntimeException("Thông tin công ty không hợp lệ");
         }
 
-        // Kiểm tra người dùng có phải là HR của công ty không
-        if (currentUser.getCompany() == null || !currentUser.getCompany().getId().equals(j.getCompany().getId())) {
-            throw new RuntimeException("Bạn không có quyền tạo công việc cho công ty này. Chỉ HR của công ty mới có quyền đăng tin.");
-        }
+        // Kiểm tra quyền
+        if (!currentUser.getRole().getName().equals("SUPER_ADMIN")) {
+            // Nếu không phải SUPER_ADMIN thì kiểm tra quyền HR
+            if (currentUser.getCompany() == null || !currentUser.getCompany().getId().equals(j.getCompany().getId())) {
+                throw new RuntimeException("Bạn không có quyền tạo công việc cho công ty này. Chỉ HR của công ty mới có quyền đăng tin.");
+            }
 
-        // Kiểm tra role HR
-        if (currentUser.getRole() == null || !currentUser.getRole().getName().equals("HR")) {
-            throw new RuntimeException("Bạn không có quyền HR để tạo công việc");
+            if (currentUser.getRole() == null || !currentUser.getRole().getName().equals("HR")) {
+                throw new RuntimeException("Bạn không có quyền HR để tạo công việc");
+            }
         }
 
         // Kiểm tra trạng thái xác minh
-        if (currentUser.getVerificationStatus() == null || 
-            currentUser.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            throw new RuntimeException("Tài khoản của bạn chưa được xác minh. Vui lòng đợi admin phê duyệt.");
+        if (!currentUser.getRole().getName().equals("SUPER_ADMIN")) {
+            if (currentUser.getVerificationStatus() == null || 
+                currentUser.getVerificationStatus() != VerificationStatus.VERIFIED) {
+                throw new RuntimeException("Tài khoản của bạn chưa được xác minh. Vui lòng đợi admin phê duyệt.");
+            }
         }
 
         // Kiểm tra quota đăng tin
