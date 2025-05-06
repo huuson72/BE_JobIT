@@ -19,6 +19,7 @@ import vn.hstore.jobhunter.domain.response.ResUserDTO;
 import vn.hstore.jobhunter.domain.response.ResultPaginationDTO;
 import vn.hstore.jobhunter.repository.UserRepository;
 import vn.hstore.jobhunter.util.constant.VerificationStatus;
+import vn.hstore.jobhunter.util.constant.GenderEnum;
 
 @Service
 public class UserService {
@@ -325,5 +326,176 @@ public class UserService {
         }
         
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public ResUserDTO updateHRCompany(Long hrId, Long companyId, String name, String description, String address, String logo) {
+        // Lấy thông tin HR
+        User hr = getUserById(hrId);
+        
+        // Kiểm tra xem người dùng có phải là HR không
+        if (hr.getRole() == null || !hr.getRole().getName().equals("HR")) {
+            throw new RuntimeException("Người dùng không phải là HR");
+        }
+        
+        // Kiểm tra công ty mới có tồn tại không
+        Optional<Company> companyOptional = companyService.findById(companyId);
+        if (!companyOptional.isPresent()) {
+            throw new RuntimeException("Công ty không tồn tại");
+        }
+        
+        // Cập nhật thông tin công ty
+        Company company = companyOptional.get();
+        if (name != null) company.setName(name);
+        if (description != null) company.setDescription(description);
+        if (address != null) company.setAddress(address);
+        if (logo != null) company.setLogo(logo);
+        
+        // Lưu thông tin công ty đã cập nhật
+        company = companyService.handleUpdateCompany(company);
+        
+        // Cập nhật công ty cho HR
+        hr.setCompany(company);
+        User updatedUser = userRepository.save(hr);
+        
+        // Chuyển đổi sang DTO và trả về
+        return convertToResUserDTO(updatedUser);
+    }
+
+    @Transactional
+    public ResUserDTO updateCompanyInfo(String companyName, String companyAddress, 
+                                      String companyDescription, String companyLogo, String businessLicense) {
+        // Lấy thông tin HR hiện tại từ token
+        User hr = getCurrentUser();
+        
+        // Kiểm tra xem người dùng có phải là HR không
+        if (hr.getRole() == null || !hr.getRole().getName().equals("HR")) {
+            throw new RuntimeException("Người dùng không phải là HR");
+        }
+        
+        // Kiểm tra HR có công ty không
+        if (hr.getCompany() == null) {
+            throw new RuntimeException("HR chưa được gán vào công ty nào");
+        }
+        
+        // Cập nhật thông tin công ty
+        Company company = hr.getCompany();
+        company.setName(companyName);
+        company.setAddress(companyAddress);
+        if (companyDescription != null) company.setDescription(companyDescription);
+        if (companyLogo != null) company.setLogo(companyLogo);
+        
+        // Lưu thông tin công ty đã cập nhật
+        company = companyService.handleUpdateCompany(company);
+        
+        // Cập nhật giấy phép kinh doanh cho HR nếu có
+        if (businessLicense != null) {
+            hr.setBusinessLicense(businessLicense);
+            hr = userRepository.save(hr);
+        }
+        
+        // Chuyển đổi sang DTO và trả về
+        return convertToResUserDTO(hr);
+    }
+
+    @Transactional
+    public ResUserDTO updateEmployerInfo(Long hrId, Long companyId, String companyName, String companyAddress, 
+                                        String companyDescription, String companyLogo, String businessLicense,
+                                        String name, String address, String phone, int age, GenderEnum gender) {
+        // Lấy thông tin HR
+        User hr = getUserById(hrId);
+        
+        // Kiểm tra xem người dùng có phải là HR không
+        if (hr.getRole() == null || !hr.getRole().getName().equals("HR")) {
+            throw new RuntimeException("Người dùng không phải là HR");
+        }
+        
+        // Kiểm tra công ty có tồn tại không
+        Optional<Company> companyOptional = companyService.findById(companyId);
+        if (!companyOptional.isPresent()) {
+            throw new RuntimeException("Công ty không tồn tại");
+        }
+        
+        // Kiểm tra HR có thuộc công ty này không
+        if (!hr.getCompany().getId().equals(companyId)) {
+            throw new RuntimeException("HR không thuộc công ty này");
+        }
+        
+        // Cập nhật thông tin công ty
+        Company company = companyOptional.get();
+        company.setName(companyName);
+        company.setAddress(companyAddress);
+        if (companyDescription != null) company.setDescription(companyDescription);
+        if (companyLogo != null) company.setLogo(companyLogo);
+        
+        // Lưu thông tin công ty đã cập nhật
+        company = companyService.handleUpdateCompany(company);
+        
+        // Cập nhật thông tin cá nhân của HR
+        if (name != null) hr.setName(name);
+        if (address != null) hr.setAddress(address);
+        if (phone != null) hr.setPhone(phone);
+        if (age > 0) hr.setAge(age);
+        if (gender != null) hr.setGender(gender);
+        if (businessLicense != null) hr.setBusinessLicense(businessLicense);
+        
+        // Lưu thông tin HR đã cập nhật
+        hr = userRepository.save(hr);
+        
+        // Chuyển đổi sang DTO và trả về
+        return convertToResUserDTO(hr);
+    }
+
+    @Transactional
+    public ResUserDTO updateHRInfo(String name, String address, String phone, 
+                                  Integer age, GenderEnum gender, String businessLicense,
+                                  String companyName, String companyAddress, 
+                                  String companyDescription, String companyLogo) {
+        // Lấy thông tin HR hiện tại từ token
+        User hr = getCurrentUser();
+        
+        // Kiểm tra xem người dùng có phải là HR không
+        if (hr.getRole() == null || !hr.getRole().getName().equals("HR")) {
+            throw new RuntimeException("Người dùng không phải là HR");
+        }
+        
+        // Cập nhật thông tin cá nhân
+        hr.setName(name);
+        hr.setAddress(address);
+        hr.setPhone(phone);
+        hr.setAge(age);
+        hr.setGender(gender);
+        if (businessLicense != null) {
+            hr.setBusinessLicense(businessLicense);
+        }
+        
+        // Xử lý thông tin công ty
+        Company company;
+        if (hr.getCompany() == null) {
+            // Nếu HR chưa có công ty, tạo mới
+            company = new Company();
+            company.setName(companyName);
+            company.setAddress(companyAddress);
+            company.setDescription(companyDescription);
+            company.setLogo(companyLogo);
+            company = companyService.handleCreateCompany(company);
+            
+            // Gán công ty mới cho HR
+            hr.setCompany(company);
+        } else {
+            // Nếu đã có công ty, cập nhật thông tin công ty hiện có
+            company = hr.getCompany();
+            company.setName(companyName);
+            company.setAddress(companyAddress);
+            if (companyDescription != null) company.setDescription(companyDescription);
+            if (companyLogo != null) company.setLogo(companyLogo);
+            company = companyService.handleUpdateCompany(company);
+        }
+        
+        // Lưu thông tin HR đã cập nhật
+        hr = userRepository.save(hr);
+        
+        // Chuyển đổi sang DTO và trả về
+        return convertToResUserDTO(hr);
     }
 }
