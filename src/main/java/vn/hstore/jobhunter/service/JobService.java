@@ -279,10 +279,11 @@ public class JobService {
     //     rs.setResult(pageUser.getContent());
     //     return rs;
     // }
-    public ResultPaginationDTO fetchAll(Specification<Job> spec, Pageable pageable, LevelEnum level, Double minSalary, Double maxSalary) {
+    public ResultPaginationDTO fetchAll(Specification<Job> spec, Pageable pageable, LevelEnum level, Double minSalary, Double maxSalary, String location) {
         Specification<Job> finalSpec = spec
                 .and(JobSpecification.hasLevel(level))
-                .and(JobSpecification.hasSalaryBetween(minSalary, maxSalary));
+                .and(JobSpecification.hasSalaryBetween(minSalary, maxSalary))
+                .and(JobSpecification.hasLocation(location));
 
         Page<Job> pageJob = this.jobRepository.findAll(finalSpec, pageable);
 

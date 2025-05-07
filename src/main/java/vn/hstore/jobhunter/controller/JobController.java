@@ -2,6 +2,9 @@ package vn.hstore.jobhunter.controller;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,15 +33,22 @@ import vn.hstore.jobhunter.util.annotation.ApiMessage;
 import vn.hstore.jobhunter.util.constant.LevelEnum;
 import vn.hstore.jobhunter.util.error.IdInvalidException;
 import vn.hstore.jobhunter.util.error.QuotaExceededException;
+import vn.hstore.jobhunter.util.constant.LocationEnum;
+import vn.hstore.jobhunter.util.SecurityUtil;
+import vn.hstore.jobhunter.domain.User;
+import vn.hstore.jobhunter.service.UserService;
+import vn.hstore.jobhunter.domain.Company;
 
 @RestController
 @RequestMapping("/api/v1")
 public class JobController {
 
     private final JobService jobService;
+    private final UserService userService;
 
-    public JobController(JobService jobService) {
+    public JobController(JobService jobService, UserService userService) {
         this.jobService = jobService;
+        this.userService = userService;
     }
 
     @PostMapping("/jobs")
@@ -122,9 +132,10 @@ public class JobController {
             Pageable pageable,
             @RequestParam(required = false, name = "level") LevelEnum level,
             @RequestParam(required = false, name = "minSalary") Double minSalary,
-            @RequestParam(required = false, name = "maxSalary") Double maxSalary) {
+            @RequestParam(required = false, name = "maxSalary") Double maxSalary,
+            @RequestParam(required = false, name = "location") String location) {
 
-        return ResponseEntity.ok().body(this.jobService.fetchAll(spec, pageable, level, minSalary, maxSalary));
+        return ResponseEntity.ok().body(this.jobService.fetchAll(spec, pageable, level, minSalary, maxSalary, location));
     }
 
     @GetMapping("/jobs/statistics")
@@ -175,4 +186,76 @@ public class JobController {
         }
     }
 
+    @GetMapping("/jobs/locations")
+    @ApiMessage("Get list of available locations")
+    public ResponseEntity<List<Map<String, String>>> getLocations() {
+        List<Map<String, String>> locations = new ArrayList<>();
+        
+        // Thêm các thành phố lớn
+        Map<String, String> majorCities = new HashMap<>();
+        majorCities.put("id", "major");
+        majorCities.put("name", "Thành phố lớn");
+        majorCities.put("locations", String.join(",", 
+            LocationEnum.HA_NOI.getDisplayName(),
+            LocationEnum.HO_CHI_MINH.getDisplayName(),
+            LocationEnum.DA_NANG.getDisplayName()
+        ));
+        locations.add(majorCities);
+        
+        // Thêm Others
+        Map<String, String> others = new HashMap<>();
+        others.put("id", "others");
+        others.put("name", "Tỉnh thành khác");
+        others.put("locations", "Others");
+        locations.add(others);
+        
+        // Thêm tất cả các tỉnh thành
+        for (LocationEnum location : LocationEnum.values()) {
+            Map<String, String> locationMap = new HashMap<>();
+            locationMap.put("id", location.name());
+            locationMap.put("name", location.getDisplayName());
+            locations.add(locationMap);
+        }
+        
+        return ResponseEntity.ok(locations);
+    }
+
+    @GetMapping("/jobs/hr-company")
+    @ApiMessage("Get HR's company information")
+    public ResponseEntity<?> getHRCompany() {
+        try {
+            // Lấy thông tin HR hiện tại từ token
+            String email = SecurityUtil.getCurrentUserLogin().orElseThrow(() -> 
+                new RuntimeException("Không tìm thấy thông tin người dùng"));
+            
+            User hr = userService.handleGetUserByUsername(email);
+            if (hr == null || hr.getRole() == null || !hr.getRole().getName().equals("HR")) {
+                RestResponse<Object> response = new RestResponse<>();
+                response.setStatusCode(403);
+                response.setError("Forbidden");
+                response.setMessage("Bạn không có quyền truy cập");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            Company company = hr.getCompany();
+            if (company == null) {
+                RestResponse<Object> response = new RestResponse<>();
+                response.setStatusCode(200);
+                response.setMessage("Bạn chưa có công ty");
+                return ResponseEntity.ok().body(response);
+            }
+
+            RestResponse<Company> response = new RestResponse<>();
+            response.setStatusCode(200);
+            response.setMessage("Lấy thông tin công ty thành công");
+            response.setData(company);
+            return ResponseEntity.ok().body(response);
+        } catch (Exception e) {
+            RestResponse<Object> response = new RestResponse<>();
+            response.setStatusCode(500);
+            response.setError("Internal Server Error");
+            response.setMessage(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }
