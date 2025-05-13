@@ -36,4 +36,10 @@ out/
 ### VS Code ###
 .vscode/
 
+### Application properties ###
 src/main/resources/application.properties
+src/main/resources/application.yml
+src/main/resources/application-prod.yml
+
+### Environment Variables ###
+.env
