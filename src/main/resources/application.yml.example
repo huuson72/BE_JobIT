@@ -2,9 +2,9 @@ spring:
   application:
     name: jobhunter
   datasource:
-    url: ${MYSQL_URL}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&autoReconnect=true
-    username: ${MYSQL_USERNAME}
-    password: ${MYSQL_PASSWORD}
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/jobhunter}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&autoReconnect=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:yourpassword}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -21,10 +21,10 @@ spring:
       max-request-size: 50MB
   # Email configuration
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:your-email@gmail.com}
+    password: ${MAIL_PASSWORD:your-app-password}
     properties:
       mail:
         smtp:
@@ -40,7 +40,7 @@ spring:
   security:
     user:
       name: ${SECURITY_USER:admin}
-      password: ${SECURITY_PASSWORD}
+      password: ${SECURITY_PASSWORD:admin}
 
 server:
   port: ${PORT:8080}
@@ -70,7 +70,7 @@ management:
 # JWT Configuration
 hstore:
   jwt:
-    base64-secret: ${JWT_SECRET}
+    base64-secret: ${JWT_SECRET:your-jwt-secret-key-here}
     access-token-validity-in-seconds: 8640000
     refresh-token-validity-in-seconds: 8640000
   upload-file:
@@ -78,11 +78,11 @@ hstore:
 
 # VNPay Configuration
 vnpay:
-  tmnCode: ${VNPAY_TMN_CODE}
-  hashSecret: ${VNPAY_HASH_SECRET}
+  tmnCode: ${VNPAY_TMN_CODE:your-tmnCode}
+  hashSecret: ${VNPAY_HASH_SECRET:your-hashSecret}
   url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
-  returnUrl: ${VNPAY_RETURN_URL}
-  frontendUrl: ${FRONTEND_URL}
+  returnUrl: ${VNPAY_RETURN_URL:http://localhost:8080/api/v1/payments/vnpay-callback}
+  frontendUrl: ${FRONTEND_URL:http://localhost:3000}
   timeZone: ${VNPAY_TIMEZONE:Asia/Ho_Chi_Minh}
   expireTime: 15
 
@@ -92,4 +92,5 @@ logging:
     org:
       springframework:
         web: DEBUG
-        http: DEBUG 
+        http: DEBUG
+ 

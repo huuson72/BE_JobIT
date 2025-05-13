@@ -1,0 +1,77 @@
+spring.application.name=jobhunter
+
+#config database
+###
+spring.jpa.hibernate.ddl-auto=update
+spring.datasource.url=jdbc:mysql://localhost:3306/jobhunter
+spring.datasource.username=root
+spring.datasource.password=your-password-here
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.show-sql: true
+###
+
+###
+#config jwt
+hstore.jwt.base64-secret=your-jwt-secret-here
+#expiration : 1 day (seconds = 24 * 60 * 60)
+# 100 days
+hstore.jwt.access-token-validity-in-seconds=8640000
+hstore.jwt.refresh-token-validity-in-seconds=8640000
+#
+###
+
+#config upload file
+###
+#default = 1MB
+spring.servlet.multipart.max-file-size=50MB
+
+#default = 10 MB (form data)
+spring.servlet.multipart.max-request-size=50MB
+
+#base path
+hstore.upload-file.base-uri=file:///your-upload-path/upload/
+###
+
+###
+#config pagination
+#start page = 1
+spring.data.web.pageable.one-indexed-parameters=true
+
+###
+#
+
+###
+#config email with Gmail
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+
+#email
+spring.mail.username=your-email@gmail.com
+
+#pass
+spring.mail.password=your-app-password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+###
+#
+
+# Actuator Configuration
+management.endpoints.web.exposure.include=*
+management.endpoint.health.show-details=always
+management.endpoint.health.probes.enabled=true
+management.endpoint.health.group.ready.include=db,diskSpace
+management.endpoint.health.group.live.include=ping
+
+# Security Configuration for Actuator
+spring.security.user.name=admin
+spring.security.user.password=admin
+
+logging.level.org.springframework.web=DEBUG
+logging.level.org.springframework.http=DEBUG
+
+# VNPay Configuration
+vnpay.tmnCode=your-tmnCode-here
+vnpay.hashSecret=your-hashSecret-here
+vnpay.url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+vnpay.returnUrl=http://localhost:8080/api/v1/payments/vnpay-callback
+vnpay.frontendUrl=http://localhost:3000
