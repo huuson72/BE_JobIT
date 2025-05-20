@@ -80,7 +80,12 @@ public class UserService {
     }
 
     public void handleDeleteUser(long id) {
-        this.userRepository.deleteById(id);
+        Optional<User> userOptional = this.userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setDeleted(true);
+            this.userRepository.save(user);
+        }
     }
 
     public User fetchUserById(long id) {
@@ -174,7 +179,7 @@ public class UserService {
     }
 
     public User handleGetUserByUsername(String username) {
-        return this.userRepository.findByEmail(username);
+        return this.userRepository.findByEmailAndNotDeleted(username);
     }
 
     public boolean isEmailExist(String email) {
@@ -256,7 +261,7 @@ public class UserService {
     }
 
     public User getUserByRefreshTokenAndEmail(String token, String email) {
-        return this.userRepository.findByRefreshTokenAndEmail(token, email);
+        return this.userRepository.findByRefreshTokenAndEmailAndNotDeleted(token, email);
     }
 
     /**

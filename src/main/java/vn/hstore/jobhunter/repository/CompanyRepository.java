@@ -16,6 +16,6 @@ import vn.hstore.jobhunter.domain.Company;
 public interface CompanyRepository extends JpaRepository<Company, Long>,
         JpaSpecificationExecutor<Company> {
 
-    @Query("SELECT DATE(c.createdAt) as date, COUNT(c) as count FROM Company c WHERE c.createdAt >= :startDate GROUP BY DATE(c.createdAt) ORDER BY date DESC")
+    @Query("SELECT DATE(c.createdAt) as date, COUNT(c) as count FROM Company c WHERE c.createdAt >= :startDate AND c.isDeleted = false GROUP BY DATE(c.createdAt) ORDER BY date DESC")
     List<Map<String, Object>> countNewCompaniesByTime(@Param("startDate") Instant startDate);
 }

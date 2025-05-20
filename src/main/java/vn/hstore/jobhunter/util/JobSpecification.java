@@ -8,6 +8,11 @@ import vn.hstore.jobhunter.util.constant.LocationEnum;
 
 public class JobSpecification {
 
+    public static Specification<Job> notDeleted() {
+        return (root, query, criteriaBuilder) 
+                -> criteriaBuilder.equal(root.get("isDeleted"), false);
+    }
+
     public static Specification<Job> hasLevel(LevelEnum level) {
         return (root, query, criteriaBuilder)
                 -> level == null ? criteriaBuilder.conjunction() : criteriaBuilder.equal(root.get("level"), level);

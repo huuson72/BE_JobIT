@@ -249,7 +249,12 @@ public class JobService {
     }
 
     public void delete(long id) {
-        this.jobRepository.deleteById(id);
+        Optional<Job> jobOptional = this.jobRepository.findById(id);
+        if (jobOptional.isPresent()) {
+            Job job = jobOptional.get();
+            job.setDeleted(true);
+            this.jobRepository.save(job);
+        }
     }
 
     private ResEmailJob convertJobToSendEmail(Job job) {
@@ -281,6 +286,7 @@ public class JobService {
     // }
     public ResultPaginationDTO fetchAll(Specification<Job> spec, Pageable pageable, LevelEnum level, Double minSalary, Double maxSalary, String location) {
         Specification<Job> finalSpec = spec
+                .and(JobSpecification.notDeleted())
                 .and(JobSpecification.hasLevel(level))
                 .and(JobSpecification.hasSalaryBetween(minSalary, maxSalary))
                 .and(JobSpecification.hasLocation(location));

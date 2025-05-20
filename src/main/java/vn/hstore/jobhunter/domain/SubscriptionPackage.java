@@ -15,11 +15,13 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import vn.hstore.jobhunter.util.SecurityUtil;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "subscription_packages")
 @Getter
 @Setter
+@Where(clause = "is_deleted = false")
 public class SubscriptionPackage {
 
     @Id
@@ -45,6 +47,8 @@ public class SubscriptionPackage {
     private Boolean isPrioritized = false;
     
     private Boolean isActive = true;
+    
+    private Boolean isDeleted = false;
     
     private Instant createdAt;
     private Instant updatedAt;

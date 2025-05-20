@@ -21,7 +21,7 @@ public class SkillService {
     }
 
     public boolean isNameExist(String name) {
-        return this.skillRepository.existsByName(name);
+        return this.skillRepository.existsByNameAndNotDeleted(name);
     }
 
     public Skill fetchSkillById(long id) {
@@ -41,16 +41,13 @@ public class SkillService {
     }
 
     public void deleteSkill(long id) {
-        // delete job (inside job_skill table)
         Optional<Skill> skillOptional = this.skillRepository.findById(id);
-        Skill currentSkill = skillOptional.get();
-        currentSkill.getJobs().forEach(job -> job.getSkills().remove(currentSkill));
-
-        // delete subscriber (inside subscriber_skill table)
-        currentSkill.getSubscribers().forEach(subs -> subs.getSkills().remove(currentSkill));
-
-        // delete skill
-        this.skillRepository.delete(currentSkill);
+        if (skillOptional.isPresent()) {
+            Skill currentSkill = skillOptional.get();
+            // Không cần xóa các mối quan hệ, chỉ cần đánh dấu skill là đã xóa
+            currentSkill.setDeleted(true);
+            this.skillRepository.save(currentSkill);
+        }
     }
 
     public ResultPaginationDTO fetchAllSkills(Specification<Skill> spec, Pageable pageable) {

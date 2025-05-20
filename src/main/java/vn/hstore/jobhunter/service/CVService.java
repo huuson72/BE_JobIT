@@ -222,7 +222,8 @@ public class CVService {
 
     public void deleteCV(Long cvId) {
         CV cv = getCVById(cvId);
-        cvRepository.delete(cv);
+        cv.setDeleted(true);
+        cvRepository.save(cv);
     }
 
 }

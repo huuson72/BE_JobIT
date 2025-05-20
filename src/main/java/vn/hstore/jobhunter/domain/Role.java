@@ -20,11 +20,13 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import vn.hstore.jobhunter.util.SecurityUtil;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "roles")
 @Getter
 @Setter
+@Where(clause = "is_deleted = false")
 public class Role {
 
     @Id
@@ -40,6 +42,8 @@ public class Role {
     private Instant updatedAt;
     private String createdBy;
     private String updatedBy;
+    
+    private boolean isDeleted = false;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = {"roles"})

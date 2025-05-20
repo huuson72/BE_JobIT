@@ -18,11 +18,13 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import vn.hstore.jobhunter.util.SecurityUtil;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "skills")
 @Getter
 @Setter
+@Where(clause = "is_deleted = false")
 public class Skill {
 
     @Id
@@ -36,6 +38,8 @@ public class Skill {
     private Instant updatedAt;
     private String createdBy;
     private String updatedBy;
+    
+    private boolean isDeleted = false;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "skills")
     @JsonIgnore

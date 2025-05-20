@@ -29,7 +29,7 @@ public class RoleService {
     }
 
     public boolean existByName(String name) {
-        return this.roleRepository.existsByName(name);
+        return this.roleRepository.existsByNameAndNotDeleted(name);
     }
 
     public Role create(Role r) {
@@ -55,7 +55,7 @@ public class RoleService {
     }
 
     public Role findByName(String name) {
-        return this.roleRepository.findByName(name);
+        return this.roleRepository.findByNameAndNotDeleted(name);
     }
 
     public Role update(Role r) {
@@ -79,7 +79,12 @@ public class RoleService {
     }
 
     public void delete(long id) {
-        this.roleRepository.deleteById(id);
+        Optional<Role> roleOptional = this.roleRepository.findById(id);
+        if (roleOptional.isPresent()) {
+            Role role = roleOptional.get();
+            role.setDeleted(true);
+            this.roleRepository.save(role);
+        }
     }
 
     public ResultPaginationDTO getRoles(Specification<Role> spec, Pageable pageable) {

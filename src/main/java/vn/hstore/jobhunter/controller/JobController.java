@@ -38,6 +38,8 @@ import vn.hstore.jobhunter.util.SecurityUtil;
 import vn.hstore.jobhunter.domain.User;
 import vn.hstore.jobhunter.service.UserService;
 import vn.hstore.jobhunter.domain.Company;
+import vn.hstore.jobhunter.service.JobApplicationService;
+import vn.hstore.jobhunter.domain.response.job.JobApplicationsCountDTO;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -45,10 +47,12 @@ public class JobController {
 
     private final JobService jobService;
     private final UserService userService;
+    private final JobApplicationService jobApplicationService;
 
-    public JobController(JobService jobService, UserService userService) {
+    public JobController(JobService jobService, UserService userService, JobApplicationService jobApplicationService) {
         this.jobService = jobService;
         this.userService = userService;
+        this.jobApplicationService = jobApplicationService;
     }
 
     @PostMapping("/jobs")
@@ -256,6 +260,38 @@ public class JobController {
             response.setError("Internal Server Error");
             response.setMessage(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/jobs/{id}/applications/count")
+    @ApiMessage("Get count of applications for a job")
+    public ResponseEntity<?> getJobApplicationsCount(@PathVariable("id") long id) {
+        try {
+            JobApplicationsCountDTO applicationsCount = this.jobApplicationService.countJobApplications(id);
+
+            RestResponse<JobApplicationsCountDTO> response = new RestResponse<>();
+            response.setStatusCode(200);
+            response.setError(null);
+            response.setMessage("Lấy số lượng ứng viên đã nộp CV thành công");
+            response.setData(applicationsCount);
+
+            return ResponseEntity.ok().body(response);
+        } catch (IdInvalidException e) {
+            RestResponse<Object> errorResponse = new RestResponse<>();
+            errorResponse.setStatusCode(404);
+            errorResponse.setError("Not Found");
+            errorResponse.setMessage(e.getMessage());
+            errorResponse.setData(null);
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        } catch (Exception e) {
+            RestResponse<Object> errorResponse = new RestResponse<>();
+            errorResponse.setStatusCode(500);
+            errorResponse.setError("Internal Server Error");
+            errorResponse.setMessage(e.getMessage());
+            errorResponse.setData(null);
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 }

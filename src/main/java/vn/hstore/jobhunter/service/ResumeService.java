@@ -98,7 +98,12 @@ public class ResumeService {
     }
 
     public void delete(long id) {
-        this.resumeRepository.deleteById(id);
+        Optional<Resume> resumeOptional = this.resumeRepository.findById(id);
+        if (resumeOptional.isPresent()) {
+            Resume resume = resumeOptional.get();
+            resume.setDeleted(true);
+            this.resumeRepository.save(resume);
+        }
     }
 
     public ResFetchResumeDTO getResume(Resume resume) {

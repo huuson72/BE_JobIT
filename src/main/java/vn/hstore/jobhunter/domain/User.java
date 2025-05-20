@@ -25,11 +25,13 @@ import lombok.Setter;
 import vn.hstore.jobhunter.util.SecurityUtil;
 import vn.hstore.jobhunter.util.constant.GenderEnum;
 import vn.hstore.jobhunter.util.constant.VerificationStatus;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
+@Where(clause = "is_deleted = false")
 public class User {
 
     @Id
@@ -60,6 +62,8 @@ public class User {
     private Instant updatedAt;
     private String createdBy;
     private String updatedBy;
+    
+    private boolean isDeleted = false;
 
     @ManyToOne
     @JoinColumn(name = "company_id")

@@ -17,11 +17,13 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "cv")
 @Getter
 @Setter
+@Where(clause = "is_deleted = false")
 public class CV {
 
     @Id
@@ -58,6 +60,8 @@ public class CV {
     private Job job;
 
     private boolean active;
+
+    private boolean isDeleted = false;
 
     @PrePersist
     public void handleBeforeCreate() {

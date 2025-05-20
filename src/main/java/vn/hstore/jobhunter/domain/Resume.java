@@ -18,11 +18,13 @@ import lombok.Getter;
 import lombok.Setter;
 import vn.hstore.jobhunter.util.SecurityUtil;
 import vn.hstore.jobhunter.util.constant.ResumeStateEnum;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "resumes")
 @Getter
 @Setter
+@Where(clause = "is_deleted = false")
 public class Resume {
 
     @Id
@@ -51,6 +53,8 @@ public class Resume {
     @ManyToOne
     @JoinColumn(name = "job_id")
     private Job job;
+
+    private boolean isDeleted = false;
 
     @PrePersist
     public void handleBeforeCreate() {

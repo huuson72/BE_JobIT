@@ -69,13 +69,14 @@ public class CompanyService {
     public void handleDeleteCompany(long id) {
         Optional<Company> comOptional = this.companyRepository.findById(id);
         if (comOptional.isPresent()) {
-            Company com = comOptional.get();
-            // fetch all user belong to this company
-            List<User> users = this.userRepository.findByCompany(com);
-            this.userRepository.deleteAll(users);
+            Company company = comOptional.get();
+            
+            // Thay vì xóa mọi user thuộc công ty, đánh dấu công ty là đã xóa
+            company.setDeleted(true);
+            this.companyRepository.save(company);
+            
+            // Không cần xóa users vì chúng sẽ vẫn giữ nguyên liên kết, nhưng công ty đã bị đánh dấu xóa
         }
-
-        this.companyRepository.deleteById(id);
     }
 
     public Optional<Company> findById(long id) {

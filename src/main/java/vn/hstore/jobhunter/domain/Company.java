@@ -19,11 +19,13 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import vn.hstore.jobhunter.util.SecurityUtil;
+import org.hibernate.annotations.Where;
 
 @Table(name = "companies")
 @Entity
 @Getter
 @Setter
+@Where(clause = "is_deleted = false")
 public class Company {
 
     @Id
@@ -47,6 +49,8 @@ public class Company {
     private String createdBy;
 
     private String updatedBy;
+    
+    private boolean isDeleted = false;
 
     @OneToMany(mappedBy = "company", fetch = FetchType.LAZY)
     @JsonIgnore

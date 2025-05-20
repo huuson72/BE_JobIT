@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import vn.hstore.jobhunter.domain.CV;
@@ -16,6 +17,9 @@ public interface CVRepository extends JpaRepository<CV, Long> {
 
     @Query("SELECT c.active as status, COUNT(c) as count FROM CV c GROUP BY c.active")
     List<Map<String, Object>> countCVsByStatus();
+
+    @Query("SELECT COUNT(c) FROM CV c WHERE c.job.id = :jobId AND c.isDeleted = false")
+    long countByJobId(@Param("jobId") Long jobId);
 
     @Query(value = "SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(c.skills, '\n', n.n), '\n', -1) as skillName, COUNT(*) as count " +
                    "FROM cv c " +
