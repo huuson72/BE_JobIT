@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -248,17 +250,43 @@ public class SubscriptionController {
     
     @GetMapping("/employer/{userId}/subscriptions")
     @ApiMessage("Get active subscriptions for an employer")
-    public ResponseEntity<RestResponse<List<EmployerSubscription>>> getActiveSubscriptions(
+    public ResponseEntity<RestResponse<List<Map<String, Object>>>> getActiveSubscriptions(
             @PathVariable("userId") Long userId) {
         
         List<EmployerSubscription> subscriptions = employerSubscriptionService
                 .getActiveSubscriptionsByUserId(userId);
         
-        RestResponse<List<EmployerSubscription>> response = new RestResponse<>();
+        List<Map<String, Object>> simplifiedSubscriptions = subscriptions.stream()
+            .map(sub -> {
+                Map<String, Object> subMap = new HashMap<>();
+                subMap.put("id", sub.getId());
+                subMap.put("startDate", sub.getStartDate());
+                subMap.put("endDate", sub.getEndDate());
+                subMap.put("status", sub.getStatus());
+                subMap.put("remainingPosts", sub.getRemainingPosts());
+                subMap.put("paymentMethod", sub.getPaymentMethod());
+                subMap.put("amount", sub.getAmount());
+                subMap.put("originalAmount", sub.getOriginalAmount());
+                subMap.put("discountPercentage", sub.getDiscountPercentage());
+                
+                Map<String, Object> packageInfo = new HashMap<>();
+                packageInfo.put("id", sub.getSubscriptionPackage().getId());
+                packageInfo.put("name", sub.getSubscriptionPackage().getName());
+                packageInfo.put("description", sub.getSubscriptionPackage().getDescription());
+                packageInfo.put("price", sub.getSubscriptionPackage().getPrice());
+                packageInfo.put("durationDays", sub.getSubscriptionPackage().getDurationDays());
+                packageInfo.put("jobPostLimit", sub.getSubscriptionPackage().getJobPostLimit());
+                subMap.put("subscriptionPackage", packageInfo);
+                
+                return subMap;
+            })
+            .collect(Collectors.toList());
+        
+        RestResponse<List<Map<String, Object>>> response = new RestResponse<>();
         response.setStatusCode(200);
         response.setError(null);
         response.setMessage("Lấy danh sách gói VIP đang hoạt động thành công");
-        response.setData(subscriptions);
+        response.setData(simplifiedSubscriptions);
         
         return ResponseEntity.ok(response);
     }

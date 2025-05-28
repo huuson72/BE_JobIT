@@ -41,7 +41,7 @@ public class PromotionService {
         // Lấy danh sách ưu đãi đang hoạt động cho gói VIP
         LocalDateTime now = LocalDateTime.now();
         List<Promotion> activePromotions = promotionRepository
-                .findBySubscriptionPackageIdAndIsActiveTrueAndStartDateBeforeAndEndDateAfterAndNotDeleted(
+                .findBySubscriptionPackageIdAndIsActiveTrueAndStartDateBeforeAndEndDateAfter(
                         packageId, now, now);
 
         // Nếu không có ưu đãi đang hoạt động, trả về giá gốc

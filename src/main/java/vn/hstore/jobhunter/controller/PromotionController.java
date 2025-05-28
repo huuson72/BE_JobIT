@@ -136,11 +136,7 @@ public class PromotionController {
         try {
             Promotion promotion = promotionRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy ưu đãi"));
-            
-            // Soft delete thay vì xóa thật
-            promotion.setDeleted(true);
-            promotionRepository.save(promotion);
-            
+            promotionRepository.delete(promotion);
             return ResponseEntity.ok(Map.of(
                     "message", "Xóa ưu đãi thành công",
                     "success", true
@@ -156,7 +152,7 @@ public class PromotionController {
     @GetMapping("/package/{packageId}")
     public ResponseEntity<?> getPromotionsByPackage(@PathVariable Long packageId) {
         try {
-            List<Promotion> promotions = promotionRepository.findBySubscriptionPackageIdAndIsDeletedFalse(packageId);
+            List<Promotion> promotions = promotionRepository.findBySubscriptionPackageId(packageId);
             return ResponseEntity.ok(Map.of(
                     "data", promotions,
                     "success", true
@@ -173,7 +169,7 @@ public class PromotionController {
     public ResponseEntity<?> getActivePromotions() {
         try {
             LocalDateTime now = LocalDateTime.now();
-            List<Promotion> promotions = promotionRepository.findByIsActiveTrueAndStartDateBeforeAndEndDateAfterAndNotDeleted(now, now);
+            List<Promotion> promotions = promotionRepository.findByIsActiveTrueAndStartDateBeforeAndEndDateAfter(now, now);
             return ResponseEntity.ok(Map.of(
                     "data", promotions,
                     "success", true

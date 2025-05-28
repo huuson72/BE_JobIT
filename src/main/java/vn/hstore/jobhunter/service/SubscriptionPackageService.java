@@ -47,12 +47,7 @@ public class SubscriptionPackageService {
     }
     
     public void deletePackage(Long id) {
-        Optional<SubscriptionPackage> packageOptional = subscriptionPackageRepository.findById(id);
-        if (packageOptional.isPresent()) {
-            SubscriptionPackage subscriptionPackage = packageOptional.get();
-            subscriptionPackage.setIsDeleted(true);
-            subscriptionPackageRepository.save(subscriptionPackage);
-        }
+        subscriptionPackageRepository.deleteById(id);
     }
     
     public Optional<SubscriptionPackage> findById(Long id) {
@@ -60,7 +55,7 @@ public class SubscriptionPackageService {
     }
     
     public List<SubscriptionPackage> findAllActivePackages() {
-        return subscriptionPackageRepository.findByIsActiveAndNotDeleted(true);
+        return subscriptionPackageRepository.findByIsActive(true);
     }
     
     public ResultPaginationDTO findAllPackages(Specification<SubscriptionPackage> spec, Pageable pageable) {

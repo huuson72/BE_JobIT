@@ -385,8 +385,8 @@ public class UserService {
         
         // Cập nhật thông tin công ty
         Company company = hr.getCompany();
-        company.setName(companyName);
-        company.setAddress(companyAddress);
+        if (companyName != null) company.setName(companyName);
+        if (companyAddress != null) company.setAddress(companyAddress);
         if (companyDescription != null) company.setDescription(companyDescription);
         if (companyLogo != null) company.setLogo(companyLogo);
         
@@ -394,8 +394,10 @@ public class UserService {
         company = companyService.handleUpdateCompany(company);
         
         // Cập nhật giấy phép kinh doanh cho HR nếu có
-        if (businessLicense != null) {
+        if (businessLicense != null && !businessLicense.equals(hr.getBusinessLicense())) {
             hr.setBusinessLicense(businessLicense);
+            // Reset trạng thái xác minh về PENDING khi cập nhật giấy phép kinh doanh
+            hr.setVerificationStatus(VerificationStatus.PENDING);
             hr = userRepository.save(hr);
         }
         
@@ -406,7 +408,7 @@ public class UserService {
     @Transactional
     public ResUserDTO updateEmployerInfo(Long hrId, Long companyId, String companyName, String companyAddress, 
                                         String companyDescription, String companyLogo, String businessLicense,
-                                        String name, String address, String phone, int age, GenderEnum gender) {
+                                        String name, String address, String phone, Integer age, GenderEnum gender) {
         // Lấy thông tin HR
         User hr = getUserById(hrId);
         
@@ -428,8 +430,8 @@ public class UserService {
         
         // Cập nhật thông tin công ty
         Company company = companyOptional.get();
-        company.setName(companyName);
-        company.setAddress(companyAddress);
+        if (companyName != null) company.setName(companyName);
+        if (companyAddress != null) company.setAddress(companyAddress);
         if (companyDescription != null) company.setDescription(companyDescription);
         if (companyLogo != null) company.setLogo(companyLogo);
         
@@ -440,9 +442,13 @@ public class UserService {
         if (name != null) hr.setName(name);
         if (address != null) hr.setAddress(address);
         if (phone != null) hr.setPhone(phone);
-        if (age > 0) hr.setAge(age);
+        if (age != null && age > 0) hr.setAge(age);
         if (gender != null) hr.setGender(gender);
-        if (businessLicense != null) hr.setBusinessLicense(businessLicense);
+        if (businessLicense != null && !businessLicense.equals(hr.getBusinessLicense())) {
+            hr.setBusinessLicense(businessLicense);
+            // Reset trạng thái xác minh về PENDING khi cập nhật giấy phép kinh doanh
+            hr.setVerificationStatus(VerificationStatus.PENDING);
+        }
         
         // Lưu thông tin HR đã cập nhật
         hr = userRepository.save(hr);
@@ -465,13 +471,15 @@ public class UserService {
         }
         
         // Cập nhật thông tin cá nhân
-        hr.setName(name);
-        hr.setAddress(address);
-        hr.setPhone(phone);
-        hr.setAge(age);
-        hr.setGender(gender);
-        if (businessLicense != null) {
+        if (name != null) hr.setName(name);
+        if (address != null) hr.setAddress(address);
+        if (phone != null) hr.setPhone(phone);
+        if (age != null) hr.setAge(age);
+        if (gender != null) hr.setGender(gender);
+        if (businessLicense != null && !businessLicense.equals(hr.getBusinessLicense())) {
             hr.setBusinessLicense(businessLicense);
+            // Reset trạng thái xác minh về PENDING khi cập nhật giấy phép kinh doanh
+            hr.setVerificationStatus(VerificationStatus.PENDING);
         }
         
         // Xử lý thông tin công ty
@@ -479,10 +487,10 @@ public class UserService {
         if (hr.getCompany() == null) {
             // Nếu HR chưa có công ty, tạo mới
             company = new Company();
-            company.setName(companyName);
-            company.setAddress(companyAddress);
-            company.setDescription(companyDescription);
-            company.setLogo(companyLogo);
+            if (companyName != null) company.setName(companyName);
+            if (companyAddress != null) company.setAddress(companyAddress);
+            if (companyDescription != null) company.setDescription(companyDescription);
+            if (companyLogo != null) company.setLogo(companyLogo);
             company = companyService.handleCreateCompany(company);
             
             // Gán công ty mới cho HR
@@ -490,8 +498,8 @@ public class UserService {
         } else {
             // Nếu đã có công ty, cập nhật thông tin công ty hiện có
             company = hr.getCompany();
-            company.setName(companyName);
-            company.setAddress(companyAddress);
+            if (companyName != null) company.setName(companyName);
+            if (companyAddress != null) company.setAddress(companyAddress);
             if (companyDescription != null) company.setDescription(companyDescription);
             if (companyLogo != null) company.setLogo(companyLogo);
             company = companyService.handleUpdateCompany(company);

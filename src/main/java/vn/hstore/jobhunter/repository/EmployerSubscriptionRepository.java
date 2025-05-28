@@ -27,6 +27,12 @@ public interface EmployerSubscriptionRepository extends JpaRepository<EmployerSu
     List<EmployerSubscription> findActiveSubscriptionsByUserId(@Param("userId") Long userId, 
                                                               @Param("currentDate") Instant currentDate);
     
+    @Query("SELECT COUNT(es) FROM EmployerSubscription es WHERE es.user.id = :userId")
+    Long countByUserId(@Param("userId") Long userId);
+    
+    @Query("SELECT COUNT(es) FROM EmployerSubscription es WHERE es.user.id = :userId AND es.status = 'ACTIVE'")
+    Long countActiveByUserId(@Param("userId") Long userId);
+    
     @Query("SELECT es FROM EmployerSubscription es WHERE es.company.id = :companyId AND es.status = 'ACTIVE' " +
            "AND es.endDate >= :currentDate ORDER BY es.endDate DESC")
     List<EmployerSubscription> findActiveSubscriptionsByCompanyId(@Param("companyId") Long companyId, 

@@ -10,12 +10,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
-import org.hibernate.annotations.Where;
 
 @Data
 @Entity
 @Table(name = "promotions")
-@Where(clause = "is_deleted = false")
 public class Promotion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +26,6 @@ public class Promotion {
     private LocalDateTime endDate;
     private boolean isActive;
     private String code; // Mã ưu đãi
-    private boolean isDeleted = false;
 
     @ManyToOne
     @JoinColumn(name = "subscription_package_id")

@@ -175,8 +175,22 @@ public class EmployerSubscriptionService {
     }
     
     public List<EmployerSubscription> getActiveSubscriptionsByUserId(Long userId) {
-        return employerSubscriptionRepository.findByUserIdAndStatusAndEndDateAfter(
-                userId, "ACTIVE", Instant.now());
+        Instant now = Instant.now();
+        System.out.println("Debug - Current time: " + now);
+        
+        // Debug counts
+        Long totalCount = employerSubscriptionRepository.countByUserId(userId);
+        Long activeCount = employerSubscriptionRepository.countActiveByUserId(userId);
+        System.out.println("Debug - Total subscriptions for user: " + totalCount);
+        System.out.println("Debug - Active subscriptions for user: " + activeCount);
+        
+        List<EmployerSubscription> subscriptions = employerSubscriptionRepository
+                .findByUserIdAndStatusAndEndDateAfter(userId, "ACTIVE", now);
+        System.out.println("Debug - Found active and not expired subscriptions: " + subscriptions.size());
+        if (!subscriptions.isEmpty()) {
+            System.out.println("Debug - First subscription end date: " + subscriptions.get(0).getEndDate());
+        }
+        return subscriptions;
     }
     
     public Map<String, Object> getEmployerSubscriptionStatus(Long userId, Long companyId) {

@@ -6,12 +6,14 @@ import vn.hstore.jobhunter.domain.User;
 import vn.hstore.jobhunter.domain.Company;
 import vn.hstore.jobhunter.domain.Subscription;
 import vn.hstore.jobhunter.domain.SubscriptionPackage;
+import vn.hstore.jobhunter.domain.EmployerSubscription;
 import vn.hstore.jobhunter.dto.PaymentRequestDTO;
 import vn.hstore.jobhunter.repository.TransactionRepository;
 import vn.hstore.jobhunter.repository.UserRepository;
 import vn.hstore.jobhunter.repository.CompanyRepository;
 import vn.hstore.jobhunter.repository.SubscriptionPackageRepository;
 import vn.hstore.jobhunter.repository.SubscriptionRepository;
+import vn.hstore.jobhunter.repository.EmployerSubscriptionRepository;
 import vn.hstore.jobhunter.util.constant.VerificationStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +21,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.*;
+import java.math.BigDecimal;
 
 @Service
 public class VNPayService {
@@ -41,6 +45,9 @@ public class VNPayService {
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private EmployerSubscriptionRepository employerSubscriptionRepository;
 
     public String createPaymentUrl(PaymentRequestDTO paymentRequest) {
         // Kiểm tra user tồn tại
@@ -173,7 +180,7 @@ public class VNPayService {
     }
 
     private void activateSubscription(Transaction transaction) {
-        // Tạo subscription mới
+        // Tạo subscription mới cho bảng subscriptions
         Subscription subscription = new Subscription();
         subscription.setUser(transaction.getUser());
         subscription.setCompany(transaction.getCompany());
@@ -183,6 +190,29 @@ public class VNPayService {
         subscription.setEndDate(LocalDateTime.now().plusMonths(1));
         subscription.setStatus("ACTIVE");
         subscriptionRepository.save(subscription);
+
+        // Tạo subscription mới cho bảng employer_subscriptions
+        EmployerSubscription employerSubscription = new EmployerSubscription();
+        employerSubscription.setUser(transaction.getUser());
+        employerSubscription.setCompany(transaction.getCompany());
+        employerSubscription.setSubscriptionPackage(transaction.getSubscriptionPackage());
+        employerSubscription.setStartDate(Instant.now());
+        employerSubscription.setEndDate(Instant.now().plusSeconds(transaction.getSubscriptionPackage().getDurationDays() * 24 * 60 * 60));
+        employerSubscription.setPaymentMethod("VNPAY");
+        employerSubscription.setAmount(BigDecimal.valueOf(transaction.getAmount()));
+        employerSubscription.setStatus("ACTIVE");
+        employerSubscription.setRemainingPosts(transaction.getSubscriptionPackage().getJobPostLimit());
+        employerSubscription.setTransactionId(transaction.getOrderId());
+        
+        // Set các trường bổ sung
+        employerSubscription.setCreatedAt(Instant.now());
+        employerSubscription.setCreatedBy(transaction.getUser().getEmail());
+        employerSubscription.setUpdatedAt(Instant.now());
+        employerSubscription.setUpdatedBy(transaction.getUser().getEmail());
+        employerSubscription.setOriginalAmount(BigDecimal.valueOf(transaction.getAmount())); // Giá gốc
+        employerSubscription.setDiscountPercentage(0.0); // Không có giảm giá
+        
+        employerSubscriptionRepository.save(employerSubscription);
     }
 
     private String generateTxnRef() {
