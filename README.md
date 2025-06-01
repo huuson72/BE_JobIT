@@ -6,7 +6,7 @@
 
 ## Tính năng chính
 
-Dựa trên codebase hiện tại, các tính năng chính của hệ thống bao gồm:
+Các tính năng chính của hệ thống bao gồm:
 
 - **Quản lý người dùng**: Đăng ký, đăng nhập, quản lý hồ sơ người dùng (ứng viên, nhà tuyển dụng, admin).
 - **Xác thực và Phân quyền**: Sử dụng JWT và Spring Security để bảo vệ các API endpoint. Hỗ trợ đăng nhập bằng Google (OAuth2).
@@ -28,17 +28,15 @@ Dựa trên codebase hiện tại, các tính năng chính của hệ thống ba
 - **Framework**: Spring Boot 3.x
 - **Ngôn ngữ**: Java 17
 - **Security**: Spring Security, JWT, OAuth2
-- **Database**: PostgreSQL
+- **Database**: MySQL
 - **ORM**: Spring Data JPA, Hibernate
-- **Caching**: Redis
 - **API**: RESTful API, Spring Web
 - **Documentation**: Swagger/OpenAPI
 - **Payment Gateway**: VNPay
-- **Build Tool**: Gradle (hoặc Maven)
+- **Build Tool**: Gradle
 - **Logging**: SLF4J, Logback
 - **Testing**: JUnit 5, Mockito
 - **Utilities**: Lombok, MapStruct
-- **Database Migration**: Flyway (Dựa trên cấu trúc code)
 
 ## Yêu cầu hệ thống
 
@@ -58,12 +56,7 @@ Dựa trên codebase hiện tại, các tính năng chính của hệ thống ba
     ```
 
 2.  **Thiết lập Database**:
-    - Tạo một database PostgreSQL mới.
-    - Hệ thống sử dụng Flyway để quản lý database schema. Flyway sẽ tự động chạy các script migration khi ứng dụng khởi động (cần cấu hình kết nối database đúng).
-
-3.  **Thiết lập Redis**:
-    - Cài đặt và chạy Redis server.
-
+    - Tạo một database MySQL mới.
 4.  **Cấu hình Môi trường (.env hoặc application.yml)**:
     - Tạo file `.env` hoặc chỉnh sửa `src/main/resources/application.yml` với các thông tin cấu hình cần thiết. Ví dụ:
 
@@ -184,6 +177,5 @@ jobit-backend/
 
 (Phần này dành cho hướng dẫn đóng góp nếu dự án là mã nguồn mở. Bạn có thể thêm các mục như báo cáo lỗi, yêu cầu tính năng, quy trình pull request.)
 
-## Giấy phép
-
-(Thông tin về giấy phép của dự án, ví dụ: MIT, Apache 2.0, v.v.) 
+© 2025 Hữu Sơn.  
+Liên hệ: huuson72@gmail.com
