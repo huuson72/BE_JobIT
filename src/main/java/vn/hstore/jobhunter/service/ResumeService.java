@@ -6,7 +6,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.turkraft.springfilter.builder.FilterBuilder;
@@ -157,7 +159,13 @@ public class ResumeService {
                 : "";
         FilterNode node = filterParser.parse("email='" + email + "'");
         FilterSpecification<Resume> spec = filterSpecificationConverter.convert(node);
-        Page<Resume> pageResume = this.resumeRepository.findAll(spec, pageable);
+
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Resume> pageResume = this.resumeRepository.findAll(spec, sortedPageable);
 
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
